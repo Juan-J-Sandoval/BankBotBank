@@ -38,7 +38,7 @@ phases:
     commands:
       # Use Post-Build for notifications, git tags, upload artifacts to S3
       - sam deploy --s3-bucket ${s3Pipeline}
-        --stack-name ChatbotEngine-${Env}
+        --stack-name BankBot-${Env}
         --region ${AWS_DEFAULT_REGION}
         --parameter-overrides Env=${Env} SecretManage=${SecretManage} ClusterArn=${ClusterArn} DBTableName=${DBTableName} BotName=${BotName} BotAlias=${BotAlias} Email=${Email} PassEmail=${PassEmail}
         --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND

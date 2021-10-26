@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  ChatbotEngineProd
+  BankBot
 
 
 Parameters:
@@ -20,7 +20,7 @@ Parameters:
   DBTableName:
     Description: Nombre de la tabla creada
     Type: String
-    Default: chatbot
+    Default: BankBot
   BotName:
     Default: TestGV
     Type: String
@@ -43,7 +43,7 @@ Resources:
   RoleLogs:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: !Sub ChatbotRole-${Env}
+      RoleName: !Sub BankBotRole-${Env}
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -64,7 +64,7 @@ Resources:
                 - ec2.amazonaws.com
             Action:
               - 'sts:AssumeRole'
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       Policies: 
         - PolicyName: !Sub PolicyLogs-${Env}
           PolicyDocument:
@@ -91,12 +91,12 @@ Resources:
   S3General:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub files-chatbot-${Env}
+      BucketName: !Sub files-BankBot-${Env}
   #Socket User
   WebsocketUser:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       Name: !Sub socket_user-${Env}
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
@@ -182,7 +182,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       FunctionName: !Sub SocketConnectUser-${Env}
       CodeUri: SocketConnectUser
       Role: !GetAtt RoleLogs.Arn
@@ -201,7 +201,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       FunctionName: !Sub SocketDisconnectUser-${Env}
       CodeUri: SocketDisconnectUser
       Role: !GetAtt RoleLogs.Arn
@@ -225,7 +225,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       FunctionName: !Sub SocketMensajeUser-${Env}
       CodeUri: SocketMensajeUser
       Role: !GetAtt RoleLogs.Arn
@@ -248,7 +248,7 @@ Resources:
   WebsocketAgent:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       Name: !Sub socket_agente-${Env}
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
@@ -402,7 +402,7 @@ Resources:
     Type: AWS::Serverless::StateMachine
     Properties:
       Name: !Sub ConversationFlow-${Env}
-      DefinitionUri: StateMachine/maquina_estados_chatbot.asl.json
+      DefinitionUri: StateMachine/maquina_estados_BankBot.asl.json
       DefinitionSubstitutions:
         SFIdentificaEstadoArn: !GetAtt SFIdentificaEstado.Arn
         SFCualquierMensajeArn: !GetAtt SFCualquierMensaje.Arn
@@ -418,7 +418,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       FunctionName: !Sub SFIdentificaEstado-${Env}
       CodeUri: SFIdentificaEstado
       Role: !GetAtt RoleLogs.Arn
@@ -432,7 +432,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       FunctionName: !Sub SFCualquierMensaje-${Env}
       CodeUri: SFCualquierMensaje
       Role: !GetAtt RoleLogs.Arn
@@ -452,7 +452,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       FunctionName: !Sub SFCapturaVenta-${Env}
       CodeUri: SFCapturaVenta
       Role: !GetAtt RoleLogs.Arn
@@ -468,7 +468,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       FunctionName: !Sub SFCapturaRecluta-${Env}
       CodeUri: SFCapturaRecluta
       Role: !GetAtt RoleLogs.Arn
@@ -484,7 +484,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       FunctionName: !Sub SFActualizaDatos-${Env}
       CodeUri: SFActualizaDatos
       Role: !GetAtt RoleLogs.Arn
@@ -501,7 +501,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub GoogleSearch-${Env}
       CodeUri: GoogleSearch
-      Description: ChatbotEngine
+      Description: BankBot
       Layers: 
         - !Ref LayerGoogle
       Role: !GetAtt RoleLogs.Arn
@@ -524,7 +524,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub SemanticDistance-${Env}
       CodeUri: SemanticDistance
-      Description: ChatbotEngine
+      Description: BankBot
       Layers:
         - !Ref LayerDistance
       Role: !GetAtt RoleLogs.Arn
@@ -537,7 +537,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub SemanticDistanceTrainer-${Env}
       CodeUri: SemanticDistanceTrainer
-      Description: ChatbotEngine
+      Description: BankBot
       Environment:
         Variables:
           MODEL_BUCKET_NAME: !Ref S3General
@@ -571,7 +571,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub Snips-${Env}
       CodeUri: Snips
-      Description: ChatbotEngine
+      Description: BankBot
       Environment:
         Variables:
           MODEL_BUCKET_NAME: !Ref S3General #TODO Crear el bucket desde plantilla
@@ -586,7 +586,7 @@ Resources:
       PackageType: Image
       MemorySize: 512
       Timeout: 60
-      Description: ChatbotEngine
+      Description: BankBot
       Environment:
         Variables:
           MODEL_BUCKET_NAME: !Ref S3General
@@ -612,7 +612,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub EntidadesPLN-${Env}
       CodeUri: EntidadesPLN
-      Description: ChatbotEngine
+      Description: BankBot
       Role: !GetAtt RoleLogs.Arn
   LayerSnips:
     Type: AWS::Serverless::LayerVersion
@@ -634,7 +634,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub TwilioStart-${Env}
       CodeUri: TwilioStart
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       Role: !GetAtt RoleLogs.Arn
       Layers:
         - !Ref LayerTwilio
@@ -658,7 +658,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub TwilioEngine-${Env}
       CodeUri: TwilioEngine
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       Role: !GetAtt RoleLogs.Arn
       Layers:
         - !Ref LayerTwilio
@@ -684,7 +684,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub TwilioToken-${Env}
       CodeUri: TwilioToken
-      Description: 'ChatbotEngine'
+      Description: 'BankBot'
       Role: !GetAtt RoleLogs.Arn
       Layers:
         - !Ref LayerTwilio
@@ -721,7 +721,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub Lex-${Env}
       CodeUri: Lex
-      Description: ChatbotEngine
+      Description: BankBot
       Role: !GetAtt RoleLogs.Arn
   PermisosLex:
     Type: AWS::Lambda::Permission
@@ -741,7 +741,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub ConversationTests-${Env}
       CodeUri: ConversationTests
-      Description: ChatbotEngine
+      Description: BankBot
       Role: !GetAtt RoleLogs.Arn
       Environment:
         Variables:
@@ -765,7 +765,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub MetricsService-${Env}
       CodeUri: MetricsService
-      Description: ChatbotEngine
+      Description: BankBot
       Role: !GetAtt RoleLogs.Arn
       Environment:
         Variables:
@@ -789,7 +789,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub ClientService-${Env}
       CodeUri: ClientService
-      Description: ChatbotEngine
+      Description: BankBot
       Role: !GetAtt RoleLogs.Arn
       Environment:
         Variables:
@@ -813,7 +813,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub ConversationService-${Env}
       CodeUri: ConversationService
-      Description: ChatbotEngine
+      Description: BankBot
       Role: !GetAtt RoleLogs.Arn
       Environment:
         Variables:
@@ -837,7 +837,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub UserService-${Env}
       CodeUri: UserService
-      Description: ChatbotEngine
+      Description: BankBot
       Role: !GetAtt RoleLogs.Arn
       Environment:
         Variables:
@@ -863,7 +863,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       FunctionName: !Sub ReportsService-${Env}
       CodeUri: ReportsService
-      Description: ChatbotEngine
+      Description: BankBot
       Role: !GetAtt RoleLogs.Arn
       Environment:
         Variables:
