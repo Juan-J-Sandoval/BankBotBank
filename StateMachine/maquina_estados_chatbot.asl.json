@@ -1,0 +1,61 @@
+{
+    "Comment": "Prueba 01 de flujo de conversacion",
+    "StartAt": "ie",
+    "States": {
+      "ie": {
+        "Type": "Task",
+        "Resource": "${SFIdentificaEstadoArn}",
+        "InputPath": "$",
+        "OutputPath": "$",
+        "Next": "motores"
+      },
+      "motores": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.estado",
+            "StringEquals": "cm",
+            "Next": "cm"
+          },
+          {
+            "Variable": "$.estado",
+            "StringEquals": "cv",
+            "Next": "cv"
+          },
+          {
+            "Variable": "$.estado",
+            "StringEquals": "cr",
+            "Next": "cr"
+          }
+        ]
+      },
+      "cm": {
+        "Type": "Task",
+        "Resource": "${SFCualquierMensajeArn}",
+        "InputPath": "$",
+        "OutputPath": "$",
+        "Next": "ad"
+      },
+      "cv": {
+        "Type": "Task",
+        "Resource": "${SFCapturaVentaArn}",
+        "InputPath": "$",
+        "OutputPath": "$",
+        "Next": "ad"
+      },
+      "cr": {
+        "Type": "Task",
+        "Resource": "${SFCapturaReclutaArn}",
+        "InputPath": "$",
+        "OutputPath": "$",
+        "Next": "ad"
+      },
+      "ad": {
+        "Type": "Task",
+        "Resource": "${SFActualizaDatosArn}",
+        "InputPath": "$",
+        "OutputPath": "$",
+        "End": true
+      }
+    }
+  }
