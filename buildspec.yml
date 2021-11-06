@@ -3,16 +3,17 @@
 version: 0.2
 env:
   variables:
-    Env: "qna"
-    SecretManage: "arn:aws:secretsmanager:us-west-2:959525568826:secret:CredencialDBqna-xlt6Ij"
-    ClusterArn: "arn:aws:rds:us-west-2:959525568826:cluster:chatbotqna"
-    DBTableName: "chatbotqna"
-    BotName: "DigitalConnectQNA"
-    BotAlias: "digitalconnectqna"
-    s3Pipeline: "codepipeline-us-west-2-598446214898"
-    ecrLambda: 959525568826.dkr.ecr.us-west-2.amazonaws.com/snipstrainerqna
-    Email: zafir@digitalconnect.com.mx
-    PassEmail: desarrolloDC
+    Version: "bank"
+    Env: "dev"
+    # SecretManage: "arn:aws:secretsmanager:us-west-2:959525568826:secret:CredencialDBqna-xlt6Ij"
+    # ClusterArn: "arn:aws:rds:us-west-2:959525568826:cluster:chatbotqna"
+    # DBTableName: "chatbotqna"
+    # BotName: "DigitalConnectQNA"
+    # BotAlias: "digitalconnectqna"
+    # s3Pipeline: "codepipeline-us-west-2-598446214898"
+    # ecrLambda: 959525568826.dkr.ecr.us-west-2.amazonaws.com/snipstrainerqna
+    # Email: zafir@digitalconnect.com.mx
+    # PassEmail: desarrolloDC
 
 
 phases:
@@ -37,10 +38,20 @@ phases:
   post_build:
     commands:
       # Use Post-Build for notifications, git tags, upload artifacts to S3
+      # - sam deploy --s3-bucket ${s3Pipeline}
+      #   --stack-name BankBot-${Env}
+      #   --region ${AWS_DEFAULT_REGION}
+      #   --parameter-overrides Env=${Env} SecretManage=${SecretManage} ClusterArn=${ClusterArn} 
+      #   DBTableName=${DBTableName} BotName=${BotName} BotAlias=${BotAlias} Email=${Email}
+      #   PassEmail=${PassEmail} Version=$(Version)
+      #   --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
+      #   --kms-key-id ${CODEBUILD_KMS_KEY_ID}
+      #   --image-repository ${ecrLambda}
+      #   --no-confirm-changeset
       - sam deploy --s3-bucket ${s3Pipeline}
         --stack-name BankBot-${Env}
         --region ${AWS_DEFAULT_REGION}
-        --parameter-overrides Env=${Env} SecretManage=${SecretManage} ClusterArn=${ClusterArn} DBTableName=${DBTableName} BotName=${BotName} BotAlias=${BotAlias} Email=${Email} PassEmail=${PassEmail}
+        --parameter-overrides Env=${Env} Version=$(Version)
         --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
         --kms-key-id ${CODEBUILD_KMS_KEY_ID}
         --image-repository ${ecrLambda}

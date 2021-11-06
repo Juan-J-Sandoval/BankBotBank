@@ -5,35 +5,39 @@ Description: >
 
 
 Parameters:
+  Version:
+    Default: banco
+    Type: String
+    Description: Variable que indica el entorno en el que se va a desplegar la plantilla
   Env:
     Default: Env
     Type: String
     Description: Variable que indica el entorno en el que se va a desplegar la plantilla
-  SecretManage:
-    Description: Arn del secret manage
-    Type: String
-    Default: arn
-  ClusterArn:
-    Description: Arn de la base de datos
-    Type: String
-    Default: arn
-  DBTableName:
-    Description: Nombre de la tabla creada
-    Type: String
-    Default: BankBot
-  BotName:
-    Default: TestGV
-    Type: String
-    Description: Nombre del bot que esta en Lex y se encuentra en LexData.json
-  BotAlias:
-    Default: TestGV
-    Type: String
-    Description: Alias del bot que esta en Lex y se encuentra en la consola de lex
-  Email:
-    Default: zafir@digitalconnect.com.mx
-    Type: String
-    Description: Correo que envia los email
-  PassEmail:
+  # SecretManage:
+  #   Description: Arn del secret manage
+  #   Type: String
+  #   Default: arn
+  # ClusterArn:
+  #   Description: Arn de la base de datos
+  #   Type: String
+  #   Default: arn
+  # DBTableName:
+  #   Description: Nombre de la tabla creada
+  #   Type: String
+  #   Default: BankBot
+  # BotName:
+  #   Default: TestGV
+  #   Type: String
+  #   Description: Nombre del bot que esta en Lex y se encuentra en LexData.json
+  # BotAlias:
+  #   Default: TestGV
+  #   Type: String
+  #   Description: Alias del bot que esta en Lex y se encuentra en la consola de lex
+  # Email:
+  #   Default: zafir@digitalconnect.com.mx
+  #   Type: String
+  #   Description: Correo que envia los email
+  # PassEmail:
     Default: desarrolloDC
     Type: String
     Description: Password del correo
@@ -43,7 +47,7 @@ Resources:
   RoleLogs:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: !Sub BankBotRole-${Env}
+      RoleName: !Sub RolGeneral-${Version}-${Env}
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -64,9 +68,8 @@ Resources:
                 - ec2.amazonaws.com
             Action:
               - 'sts:AssumeRole'
-      Description: 'BankBot'
       Policies: 
-        - PolicyName: !Sub PolicyLogs-${Env}
+        - PolicyName: !Sub PolicyGeneral-${Version}-${Env}
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -91,71 +94,67 @@ Resources:
   S3General:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub files-BankBot-${Env}
+      BucketName: !Sub files-${Version}-${Env}
   #Socket User
-  WebsocketUser:
+  SocketUser:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Description: 'BankBot'
-      Name: !Sub socket_user-${Env}
+      Name: !Sub socket_user-${Version}-${Env}
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
-  RutaConexion:
+  RutaConexionUser:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref WebsocketUser
+      ApiId: !Ref SocketUser
       RouteKey: $connect
       AuthorizationType: NONE
       OperationName: Ruta de conexion
       Target: !Join
         - '/'
         - - 'integrations'
-          - !Ref IntegracionConexion
-  IntegracionConexion:
+          - !Ref IntegracionConexionUser
+  IntegracionConexionUser:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref WebsocketUser
-      Description: Integracion de Conexion
+      ApiId: !Ref SocketUser
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub: 
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SocketConnectUser.Arn}/invocations
-  RutaDesconexion:
+  RutaDesconexionUser:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref WebsocketUser
+      ApiId: !Ref SocketUser
       RouteKey: $disconnect
       AuthorizationType: NONE
       OperationName: Ruta de desconexion
       Target: !Join
         - '/'
         - - 'integrations'
-          - !Ref IntegracionDesconexion
-  IntegracionDesconexion:
+          - !Ref IntegracionDesconexionUser
+  IntegracionDesconexionUser:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref WebsocketUser
-      Description: Disconnect Integration
+      ApiId: !Ref SocketUser
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub: 
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SocketDisconnectUser.Arn}/invocations
-  RutaMensaje:
+  RutaMensajeUser:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref WebsocketUser
+      ApiId: !Ref SocketUser
       RouteKey: mensaje
       AuthorizationType: NONE
-      OperationName: RutaMensaje
+      OperationName: RutaMensajeUser
       Target: !Join
         - '/'
         - - 'integrations'
-          - !Ref IntegracionSocketMensaje
-  IntegracionSocketMensaje:
+          - !Ref IntegracionSocketMensajeUser
+  IntegracionSocketMensajeUser:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref WebsocketUser
-      Description: Integracion Mensaje
+      ApiId: !Ref SocketUser
       IntegrationType: AWS_PROXY
       IntegrationUri: 
         Fn::Sub:
@@ -163,18 +162,17 @@ Resources:
   DeploymentUser:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
-    - RutaConexion
-    - RutaMensaje
-    - RutaDesconexion
+    - RutaConexionUser
+    - RutaMensajeUser
+    - RutaDesconexionUser
     Properties:
-      ApiId: !Ref WebsocketUser
+      ApiId: !Ref SocketUser
   StageUser:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       StageName: !Ref Env
-      Description: Version 0.1
       DeploymentId: !Ref DeploymentUser
-      ApiId: !Ref WebsocketUser
+      ApiId: !Ref SocketUser
   SocketConnectUser:
     Type: AWS::Serverless::Function
     Properties:
@@ -182,14 +180,13 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'BankBot'
-      FunctionName: !Sub SocketConnectUser-${Env}
+      FunctionName: !Sub SocketConnectUser-${Version}-${Env}
       CodeUri: SocketConnectUser
       Role: !GetAtt RoleLogs.Arn
-  PermisosSocketConnect:
+  PermisosSocketConnectUser:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - WebsocketUser
+      - SocketUser
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SocketConnectUser
@@ -201,19 +198,13 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'BankBot'
-      FunctionName: !Sub SocketDisconnectUser-${Env}
+      FunctionName: !Sub SocketDisconnectUser-${Version}-${Env}
       CodeUri: SocketDisconnectUser
       Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          cluster_arn_aurora: !Ref ClusterArn
-          secret_arn_aurora: !Ref SecretManage
-          name_db: !Ref DBTableName
   PermisosSocketDisconnectUser:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - WebsocketUser
+      - SocketUser
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SocketDisconnectUser
@@ -225,37 +216,32 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'BankBot'
-      FunctionName: !Sub SocketMensajeUser-${Env}
+      FunctionName: !Sub SocketMensajeUser-${Version}-${Env}
       CodeUri: SocketMensajeUser
       Role: !GetAtt RoleLogs.Arn
       Environment:
         Variables:
-          STATE_MACHINE: !Ref ConversationFlow
-          cluster_arn_aurora: !Ref ClusterArn
-          secret_arn_aurora: !Ref SecretManage
-          socketAgente: !Join [ '', [ 'https://', !Ref WebsocketAgent, '.execute-api.', !Ref 'AWS::Region', '.amazonaws.com/', !Ref Env]]
-          name_db: !Ref DBTableName
-  PermisosSocketMensaje:
+          socketAgente: !Join [ '', [ 'https://', !Ref SocketAgent, '.execute-api.', !Ref 'AWS::Region', '.amazonaws.com/', !Ref Env]]
+  PermisosSocketMensajeUser:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - WebsocketUser
+      - SocketUser
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SocketMensajeUser
       Principal: apigateway.amazonaws.com
   #Socket Agent
-  WebsocketAgent:
+  SocketAgent:
     Type: AWS::ApiGatewayV2::Api
     Properties:
       Description: 'BankBot'
-      Name: !Sub socket_agente-${Env}
+      Name: !Sub socket_agente-${Version}-${Env}
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
   RutaConexionAgent:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref WebsocketAgent
+      ApiId: !Ref SocketAgent
       RouteKey: $connect
       AuthorizationType: NONE
       OperationName: Ruta de conexion
@@ -266,8 +252,7 @@ Resources:
   IntegracionConexionAgent:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref WebsocketAgent
-      Description: Integracion de Conexion
+      ApiId: !Ref SocketAgent
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub: 
@@ -275,7 +260,7 @@ Resources:
   RutaDesconexionAgent:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref WebsocketAgent
+      ApiId: !Ref SocketAgent
       RouteKey: $disconnect
       AuthorizationType: NONE
       OperationName: Ruta de desconexion
@@ -286,7 +271,7 @@ Resources:
   IntegracionDesconexionAgent:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref WebsocketAgent
+      ApiId: !Ref SocketAgent
       Description: Disconnect Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
@@ -295,7 +280,7 @@ Resources:
   RutaMensajeAgent:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref WebsocketAgent
+      ApiId: !Ref SocketAgent
       RouteKey: mensaje
       AuthorizationType: NONE
       OperationName: RutaMensajeAgent
@@ -306,7 +291,7 @@ Resources:
   IntegracionSocketMensajeAgent:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref WebsocketAgent
+      ApiId: !Ref SocketAgent
       Description: Integracion Mensaje
       IntegrationType: AWS_PROXY
       IntegrationUri: 
@@ -319,14 +304,13 @@ Resources:
     - RutaMensajeAgent
     - RutaDesconexionAgent
     Properties:
-      ApiId: !Ref WebsocketAgent
+      ApiId: !Ref SocketAgent
   StageAgent:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       StageName: !Ref Env
-      Description: Version 0.1
       DeploymentId: !Ref DeploymentAgent
-      ApiId: !Ref WebsocketAgent
+      ApiId: !Ref SocketAgent
   SocketConnectAgent:
     Type: AWS::Serverless::Function
     Properties:
@@ -334,18 +318,13 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SocketConnectAgent-${Env}
+      FunctionName: !Sub SocketConnectAgent-${Version}-${Env}
       CodeUri: SocketConnectAgent
       Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          cluster_arn_aurora: !Ref ClusterArn
-          secret_arn_aurora: !Ref SecretManage
-          name_db: !Ref DBTableName
   PermisosSocketConnectAgent:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - WebsocketAgent
+      - SocketAgent
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SocketConnectAgent
@@ -357,18 +336,13 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SocketDisconnectAgent-${Env}
+      FunctionName: !Sub SocketDisconnectAgent-${Version}-${Env}
       CodeUri: SocketDisconnectAgent
       Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          cluster_arn_aurora: !Ref ClusterArn
-          secret_arn_aurora: !Ref SecretManage
-          name_db: !Ref DBTableName
   PermisosSocketDisconnectAgent:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - WebsocketAgent
+      - SocketAgent
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SocketDisconnectAgent
@@ -380,19 +354,16 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SocketMensajeAgent-${Env}
+      FunctionName: !Sub SocketMensajeAgent-${Version}-${Env}
       CodeUri: SocketMensajeAgent
       Role: !GetAtt RoleLogs.Arn
       Environment:
         Variables:
-          cluster_arn_aurora: !Ref ClusterArn
-          secret_arn_aurora: !Ref SecretManage
-          name_db: !Ref DBTableName
-          socketUsuario: !Join [ '', [ 'https://', !Ref WebsocketUser, '.execute-api.', !Ref AWS::Region, '.amazonaws.com/', !Ref Env]]
+          socketUsuario: !Join [ '', [ 'https://', !Ref SocketUser, '.execute-api.', !Ref AWS::Region, '.amazonaws.com/', !Ref Env]]
   PermisosSocketMensajeAgent:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - WebsocketAgent
+      - SocketAgent
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SocketMensajeAgent
@@ -401,96 +372,88 @@ Resources:
   ConversationFlow:
     Type: AWS::Serverless::StateMachine
     Properties:
-      Name: !Sub ConversationFlow-${Env}
-      DefinitionUri: StateMachine/maquina_estados_BankBot.asl.json
+      Name: !Sub ConversationFlow-${Version}-${Env}
+      DefinitionUri: StateMachine/StateMachineBankBot.asl.json
       DefinitionSubstitutions:
-        SFIdentificaEstadoArn: !GetAtt SFIdentificaEstado.Arn
-        SFCualquierMensajeArn: !GetAtt SFCualquierMensaje.Arn
-        SFCapturaVentaArn: !GetAtt SFCapturaVenta.Arn
-        SFCapturaReclutaArn: !GetAtt SFCapturaRecluta.Arn
-        SFActualizaDatosArn: !GetAtt SFActualizaDatos.Arn
+        SFPasoUnoArn: !GetAtt SFPasoUno.Arn
+        SFMensajeXArn: !GetAtt SFMensajeX.Arn
+        SFSegurosArn: !GetAtt SFSeguros.Arn
+        SFAclaracionesArn: !GetAtt SFAclaraciones.Arn
+        SFCuentasArn: !GetAtt SFCuentas.Arn
+        SFCreditosArn: !GetAtt SFCreditos.Arn
+        SFPasoTresArn: !GetAtt SFPasoTres.Arn
       Role: !GetAtt RoleLogs.Arn
       Type: EXPRESS
-  SFIdentificaEstado:
+  SFPasoUno:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: python3.8
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'BankBot'
-      FunctionName: !Sub SFIdentificaEstado-${Env}
-      CodeUri: SFIdentificaEstado
+      FunctionName: !Sub SFPasoUno-${Version}-${Env}
+      CodeUri: SFPasoUno
       Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          ConversationService: !Ref ConversationService
-  SFCualquierMensaje:
+  SFMensajeX:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: python3.8
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'BankBot'
-      FunctionName: !Sub SFCualquierMensaje-${Env}
-      CodeUri: SFCualquierMensaje
+      FunctionName: !Sub SFMensajeX-${Version}-${Env}
+      CodeUri: SFMensajeX
       Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          GoogleSearch: !Ref GoogleSearchLambda
-          SemanticDistance: !Ref SemanticDistance
-          Snips: !Ref Snips
-          BOT_NAME: !Ref BotName
-          BOT_ALIAS: !Ref BotAlias
-          BUCKET_NAME: !Ref S3General
-          BOT_DATA_FILE: responseDatas.json
-  SFCapturaVenta:
+  SFSeguros:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: python3.8
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'BankBot'
-      FunctionName: !Sub SFCapturaVenta-${Env}
-      CodeUri: SFCapturaVenta
+      FunctionName: !Sub SFSeguros-${Version}-${Env}
+      CodeUri: SFSeguros
       Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          Snips: !Ref Snips
-          BUCKET_NAME: !Ref S3General
-          BOT_DATA_FILE: responseDatas.json
-  SFCapturaRecluta:
+  SFAclaraciones:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: python3.8
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'BankBot'
-      FunctionName: !Sub SFCapturaRecluta-${Env}
-      CodeUri: SFCapturaRecluta
+      FunctionName: !Sub SFAclaraciones-${Version}-${Env}
+      CodeUri: SFAclaraciones
       Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          Snips: !Ref Snips
-          BUCKET_NAME: !Ref S3General
-          BOT_DATA_FILE: responseDatas.json
-  SFActualizaDatos:
+  SFCuentas:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: python3.8
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      Description: 'BankBot'
-      FunctionName: !Sub SFActualizaDatos-${Env}
-      CodeUri: SFActualizaDatos
+      FunctionName: !Sub SFCuentas-${Version}-${Env}
+      CodeUri: SFCuentas
       Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          ConversationService: !Ref ConversationService
+  SFCreditos:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.8
+      Timeout: 29
+      MemorySize: 128
+      Handler: lambda_function.lambda_handler
+      FunctionName: !Sub SFCreditos-${Version}-${Env}
+      CodeUri: SFCreditos
+      Role: !GetAtt RoleLogs.Arn
+  SFPasoTres:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.8
+      Timeout: 29
+      MemorySize: 128
+      Handler: lambda_function.lambda_handler
+      FunctionName: !Sub SFPasoTres-${Version}-${Env}
+      CodeUri: SFPasoTres
+      Role: !GetAtt RoleLogs.Arn
   #Motores de PLN
   GoogleSearchLambda:
     Type: AWS::Serverless::Function
@@ -499,16 +462,15 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub GoogleSearch-${Env}
+      FunctionName: !Sub GoogleSearch-${Version}-${Env}
       CodeUri: GoogleSearch
-      Description: BankBot
       Layers: 
         - !Ref LayerGoogle
       Role: !GetAtt RoleLogs.Arn
   LayerGoogle:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: !Sub LayerGoogle-${Env}
+      LayerName: !Sub LayerGoogle-${Version}-${Env}
       ContentUri: Layers/google
       CompatibleRuntimes:
         - python3.8
@@ -522,40 +484,15 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SemanticDistance-${Env}
+      FunctionName: !Sub SemanticDistance-${Version}-${Env}
       CodeUri: SemanticDistance
-      Description: BankBot
       Layers:
         - !Ref LayerDistance
       Role: !GetAtt RoleLogs.Arn
-  SemanticDistanceTrainer:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SemanticDistanceTrainer-${Env}
-      CodeUri: SemanticDistanceTrainer
-      Description: BankBot
-      Environment:
-        Variables:
-          MODEL_BUCKET_NAME: !Ref S3General
-      Layers:
-        - !Ref LayerDistance
-      Role: !GetAtt RoleLogs.Arn
-  PermisosSemanticDistanceTrainer:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref SemanticDistanceTrainer
-      Principal: apigateway.amazonaws.com
   LayerDistance:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: !Sub LayerDistance-${Env}
+      LayerName: !Sub LayerDistance-${Version}-${Env}
       ContentUri: Layers/distancia
       CompatibleRuntimes:
         - python3.8
@@ -569,40 +506,15 @@ Resources:
       Timeout: 30
       MemorySize: 512
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub Snips-${Env}
+      FunctionName: !Sub Snips-${Version}-${Env}
       CodeUri: Snips
-      Description: BankBot
       Environment:
         Variables:
-          MODEL_BUCKET_NAME: !Ref S3General #TODO Crear el bucket desde plantilla
+          MODEL_BUCKET_NAME: !Ref S3General 
           ENTIDADESPLN: !Ref EntidadesPLN
       Layers: 
         - !Ref LayerSnips 
       Role: !GetAtt RoleLogs.Arn
-  SnipsTrainer:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub SnipsTrainer-${Env}
-      PackageType: Image
-      MemorySize: 512
-      Timeout: 60
-      Description: BankBot
-      Environment:
-        Variables:
-          MODEL_BUCKET_NAME: !Ref S3General
-      Role: !GetAtt RoleLogs.Arn
-    Metadata:
-      Dockerfile: Dockerfile
-      DockerContext: SnipsTrainer
-      DockerTag: v1
-  PermisosSnipsTrainer:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref SnipsTrainer
-      Principal: apigateway.amazonaws.com
   EntidadesPLN:
     Type: AWS::Serverless::Function
     Properties:
@@ -610,102 +522,14 @@ Resources:
       Timeout: 29
       MemorySize: 512
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub EntidadesPLN-${Env}
+      FunctionName: !Sub EntidadesPLN-${Version}-${Env}
       CodeUri: EntidadesPLN
-      Description: BankBot
       Role: !GetAtt RoleLogs.Arn
   LayerSnips:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: !Sub LayerSnips-${Env}
+      LayerName: !Sub LayerSnips-${Version}-${Env}
       ContentUri: Layers/snips
-      CompatibleRuntimes:
-        - python3.8
-      RetentionPolicy: Delete
-    Metadata:
-      BuildMethod: python3.8
-  #Twilio
-  TwilioStart:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub TwilioStart-${Env}
-      CodeUri: TwilioStart
-      Description: 'BankBot'
-      Role: !GetAtt RoleLogs.Arn
-      Layers:
-        - !Ref LayerTwilio
-      Environment:
-        Variables:
-          STAGE: !Ref Env
-  PermisosStart:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref TwilioStart
-      Principal: apigateway.amazonaws.com
-  TwilioEngine:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub TwilioEngine-${Env}
-      CodeUri: TwilioEngine
-      Description: 'BankBot'
-      Role: !GetAtt RoleLogs.Arn
-      Layers:
-        - !Ref LayerTwilio
-      Environment:
-        Variables:
-          MAQUINA_ESTADOS: !Ref ConversationFlow
-          STAGE: !Ref Env
-          ConversationService: !Ref ConversationService
-  PermisosEngine:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref TwilioEngine
-      Principal: apigateway.amazonaws.com
-  TwilioToken:
-    Type: 'AWS::Serverless::Function'
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub TwilioToken-${Env}
-      CodeUri: TwilioToken
-      Description: 'BankBot'
-      Role: !GetAtt RoleLogs.Arn
-      Layers:
-        - !Ref LayerTwilio
-      Environment:
-        Variables:
-          TWILIO_ACCOUNT_SID: AC508b48166ef08a315b3596087294d79d
-          TWILIO_AUTH_TOKEN: 05c507cdb310c5e0df90e9895809457b
-          TWILIO_TWIML_APP_SID: APfb68e1513bbb00c422a0d4a70995f296
-  PermisosToken:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref TwilioToken
-      Principal: apigateway.amazonaws.com
-  LayerTwilio:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      LayerName: !Sub LayerTwilio-${Env}
-      ContentUri: Layers/twilio
       CompatibleRuntimes:
         - python3.8
       RetentionPolicy: Delete
@@ -719,9 +543,8 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub Lex-${Env}
+      FunctionName: !Sub Lex-${Version}-${Env}
       CodeUri: Lex
-      Description: BankBot
       Role: !GetAtt RoleLogs.Arn
   PermisosLex:
     Type: AWS::Lambda::Permission
@@ -732,1009 +555,1009 @@ Resources:
       FunctionName: !Ref Lex
       Principal: apigateway.amazonaws.com
   #Conexiones a Aurora Serverless
-  ConversationTests:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub ConversationTests-${Env}
-      CodeUri: ConversationTests
-      Description: BankBot
-      Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          cluster_arn_aurora: !Ref ClusterArn
-          secret_arn_aurora: !Ref SecretManage
-          name_db: !Ref DBTableName
-  PermisosConversationTests:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref ConversationTests
-      Principal: apigateway.amazonaws.com
-  MetricsService:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub MetricsService-${Env}
-      CodeUri: MetricsService
-      Description: BankBot
-      Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          cluster_arn_aurora: !Ref ClusterArn
-          secret_arn_aurora: !Ref SecretManage
-          name_db: !Ref DBTableName
-  PermisosMetricsService:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref MetricsService
-      Principal: apigateway.amazonaws.com
-  ClientService:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub ClientService-${Env}
-      CodeUri: ClientService
-      Description: BankBot
-      Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          cluster_arn_aurora: !Ref ClusterArn
-          secret_arn_aurora: !Ref SecretManage
-          name_db: !Ref DBTableName
-  PermisosClientService:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref ClientService
-      Principal: apigateway.amazonaws.com
-  ConversationService:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub ConversationService-${Env}
-      CodeUri: ConversationService
-      Description: BankBot
-      Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          cluster_arn_aurora: !Ref ClusterArn
-          secret_arn_aurora: !Ref SecretManage
-          name_db: !Ref DBTableName
-  PermisosConversationService:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref ConversationService
-      Principal: apigateway.amazonaws.com
-  UserService:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub UserService-${Env}
-      CodeUri: UserService
-      Description: BankBot
-      Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          email_host: !Ref Email
-          pass_email: !Ref PassEmail
-          cluster_arn_aurora: !Ref ClusterArn
-          secret_arn_aurora: !Ref SecretManage
-          name_db: !Ref DBTableName
-  PermisosUserService:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref UserService
-      Principal: apigateway.amazonaws.com
-  ReportsService:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub ReportsService-${Env}
-      CodeUri: ReportsService
-      Description: BankBot
-      Role: !GetAtt RoleLogs.Arn
-      Environment:
-        Variables:
-          cluster_arn_aurora: !Ref ClusterArn
-          secret_arn_aurora: !Ref SecretManage
-          name_db: !Ref DBTableName
-  PermisosReportsService:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref ReportsService
-      Principal: apigateway.amazonaws.com
-  #Todas las apis generales
-  PointAccess:
-    Type: AWS::ApiGateway::RestApi
-    Properties:
-      Body:
-        openapi: "3.0.1"
-        info:
-          title: !Sub PointAccess-${Env}
-          description: "Open API"
-        paths:
-          /import:
-            post:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                uri: !Sub 
-                  - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
-                  - {Lambda: !Ref Lex}
-                httpMethod: "POST"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"
-          /{folder}:
-            put:
-              parameters:
-              - name: "Content-Type"
-                in: "header"
-                schema:
-                  type: "string"
-              - name: "folder"
-                in: "path"
-                required: true
-                schema:
-                  type: "string"
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Content-Length:
-                      schema:
-                        type: "string"
-                    Timestamp:
-                      schema:
-                        type: "string"
-                    Content-Type:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              security:
-              - sigv4: []
-              x-amazon-apigateway-integration:
-                type: "aws"
-                httpMethod: "PUT"
-                credentials: !GetAtt RoleLogs.Arn
-                uri: "arn:aws:apigateway:us-west-2:s3:path/bucket"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Content-Type: "integration.response.header.Content-Type"
-                      method.response.header.Content-Length: "integration.response.header.Content-Length"
-                      method.response.header.Timestamp: "integration.response.header.Date"
-                requestParameters:
-                  integration.request.header.x-amz-acl: "'authenticated-read'"
-                  integration.request.path.bucket: "method.request.path.folder"
-                  integration.request.header.Content-Type: "method.request.header.Content-Type"
-                passthroughBehavior: "when_no_match"
-          /{folder}/{item}:
-            put:
-              parameters:
-              - name: "item"
-                in: "path"
-                required: true
-                schema:
-                  type: "string"
-              - name: "folder"
-                in: "path"
-                required: true
-                schema:
-                  type: "string"
-              responses:
-                "200":
-                  description: "200 response"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                type: "aws"
-                httpMethod: "PUT"
-                credentials: !GetAtt RoleLogs.Arn
-                uri: "arn:aws:apigateway:us-west-2:s3:path/{bucket}/{object}"
-                responses:
-                  default:
-                    statusCode: "200"
-                requestParameters:
-                  integration.request.path.object: "method.request.path.item"
-                  integration.request.path.bucket: "method.request.path.folder"
-                passthroughBehavior: "when_no_match"
-          /convertest:
-            post:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                uri: !Sub 
-                  - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
-                  - {Lambda: !Ref ConversationTests}
-                httpMethod: "POST"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"
-          /user:
-            post:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${UserService}/invocations
-                httpMethod: "POST"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"
-          /metrics:
-            get:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MetricsService}/invocations
-                httpMethod: "POST"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                contentHandling: "CONVERT_TO_TEXT"
-                type: "aws"
-            post:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MetricsService}/invocations
-                httpMethod: "POST"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"      
-          /clients:
-            post:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                uri: !Sub 
-                  - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
-                  - {Lambda: !Ref ClientService}
-                httpMethod: "POST"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"
-          /conversation:
-            post:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                uri: !Sub 
-                  - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
-                  - {Lambda: !Ref ConversationService}
-                httpMethod: "POST"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"
-          /reports:
-            post:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${ReportsService}/invocations
-                httpMethod: "POST"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"
-          /token:
-            get:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                httpMethod: "POST"
-                uri: !Sub 
-                  - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
-                  - {Lambda: !Ref TwilioToken}
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"
-          /start:
-            get:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    text/xml:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                httpMethod: "POST"
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${TwilioStart}/invocations
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws_proxy"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    text/xml:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"
-          /engine:
-            get:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    text/xml:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                httpMethod: "POST"
-                uri: !Sub 
-                  - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
-                  - {Lambda: !Ref TwilioEngine}
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws_proxy"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    text/xml:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"
-          /SnipsTrainer:
-            post:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${SnipsTrainer}/invocations
-                httpMethod: "POST"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"
-          /SemanticDistanceTrainer:
-            post:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${SemanticDistanceTrainer}/invocations
-                httpMethod: "POST"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "aws"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                passthroughBehavior: "when_no_match"
-                type: "mock"
-        components:
-          schemas:
-            Empty:
-              title: "Empty Schema"
-              type: "object"
-        x-amazon-apigateway-binary-media-types:
-        - "*/*"
-      Mode: overwrite
-  ImplementacionAPIS:
-    Type: AWS::ApiGateway::Deployment
-    Properties:
-      RestApiId: !Ref PointAccess
-      Description: OPEN API
-      StageName: !Ref Env
+  # ConversationTests:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Runtime: python3.8
+  #     Timeout: 29
+  #     MemorySize: 128
+  #     Handler: lambda_function.lambda_handler
+  #     FunctionName: !Sub ConversationTests-${Env}
+  #     CodeUri: ConversationTests
+  #     Description: BankBot
+  #     Role: !GetAtt RoleLogs.Arn
+  #     Environment:
+  #       Variables:
+  #         cluster_arn_aurora: !Ref ClusterArn
+  #         secret_arn_aurora: !Ref SecretManage
+  #         name_db: !Ref DBTableName
+  # PermisosConversationTests:
+  #   Type: AWS::Lambda::Permission
+  #   DependsOn:
+  #     - PointAccess
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !Ref ConversationTests
+  #     Principal: apigateway.amazonaws.com
+  # MetricsService:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Runtime: python3.8
+  #     Timeout: 29
+  #     MemorySize: 128
+  #     Handler: lambda_function.lambda_handler
+  #     FunctionName: !Sub MetricsService-${Env}
+  #     CodeUri: MetricsService
+  #     Description: BankBot
+  #     Role: !GetAtt RoleLogs.Arn
+  #     Environment:
+  #       Variables:
+  #         cluster_arn_aurora: !Ref ClusterArn
+  #         secret_arn_aurora: !Ref SecretManage
+  #         name_db: !Ref DBTableName
+  # PermisosMetricsService:
+  #   Type: AWS::Lambda::Permission
+  #   DependsOn:
+  #     - PointAccess
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !Ref MetricsService
+  #     Principal: apigateway.amazonaws.com
+  # ClientService:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Runtime: python3.8
+  #     Timeout: 29
+  #     MemorySize: 128
+  #     Handler: lambda_function.lambda_handler
+  #     FunctionName: !Sub ClientService-${Env}
+  #     CodeUri: ClientService
+  #     Description: BankBot
+  #     Role: !GetAtt RoleLogs.Arn
+  #     Environment:
+  #       Variables:
+  #         cluster_arn_aurora: !Ref ClusterArn
+  #         secret_arn_aurora: !Ref SecretManage
+  #         name_db: !Ref DBTableName
+  # PermisosClientService:
+  #   Type: AWS::Lambda::Permission
+  #   DependsOn:
+  #     - PointAccess
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !Ref ClientService
+  #     Principal: apigateway.amazonaws.com
+  # ConversationService:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Runtime: python3.8
+  #     Timeout: 29
+  #     MemorySize: 128
+  #     Handler: lambda_function.lambda_handler
+  #     FunctionName: !Sub ConversationService-${Env}
+  #     CodeUri: ConversationService
+  #     Description: BankBot
+  #     Role: !GetAtt RoleLogs.Arn
+  #     Environment:
+  #       Variables:
+  #         cluster_arn_aurora: !Ref ClusterArn
+  #         secret_arn_aurora: !Ref SecretManage
+  #         name_db: !Ref DBTableName
+  # PermisosConversationService:
+  #   Type: AWS::Lambda::Permission
+  #   DependsOn:
+  #     - PointAccess
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !Ref ConversationService
+  #     Principal: apigateway.amazonaws.com
+  # UserService:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Runtime: python3.8
+  #     Timeout: 29
+  #     MemorySize: 128
+  #     Handler: lambda_function.lambda_handler
+  #     FunctionName: !Sub UserService-${Env}
+  #     CodeUri: UserService
+  #     Description: BankBot
+  #     Role: !GetAtt RoleLogs.Arn
+  #     Environment:
+  #       Variables:
+  #         email_host: !Ref Email
+  #         pass_email: !Ref PassEmail
+  #         cluster_arn_aurora: !Ref ClusterArn
+  #         secret_arn_aurora: !Ref SecretManage
+  #         name_db: !Ref DBTableName
+  # PermisosUserService:
+  #   Type: AWS::Lambda::Permission
+  #   DependsOn:
+  #     - PointAccess
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !Ref UserService
+  #     Principal: apigateway.amazonaws.com
+  # ReportsService:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Runtime: python3.8
+  #     Timeout: 29
+  #     MemorySize: 128
+  #     Handler: lambda_function.lambda_handler
+  #     FunctionName: !Sub ReportsService-${Env}
+  #     CodeUri: ReportsService
+  #     Description: BankBot
+  #     Role: !GetAtt RoleLogs.Arn
+  #     Environment:
+  #       Variables:
+  #         cluster_arn_aurora: !Ref ClusterArn
+  #         secret_arn_aurora: !Ref SecretManage
+  #         name_db: !Ref DBTableName
+  # PermisosReportsService:
+  #   Type: AWS::Lambda::Permission
+  #   DependsOn:
+  #     - PointAccess
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !Ref ReportsService
+  #     Principal: apigateway.amazonaws.com
+  # #Todas las apis generales
+  # PointAccess:
+  #   Type: AWS::ApiGateway::RestApi
+  #   Properties:
+  #     Body:
+  #       openapi: "3.0.1"
+  #       info:
+  #         title: !Sub PointAccess-${Env}
+  #         description: "Open API"
+  #       paths:
+  #         /import:
+  #           post:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               uri: !Sub 
+  #                 - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
+  #                 - {Lambda: !Ref Lex}
+  #               httpMethod: "POST"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"
+  #         /{folder}:
+  #           put:
+  #             parameters:
+  #             - name: "Content-Type"
+  #               in: "header"
+  #               schema:
+  #                 type: "string"
+  #             - name: "folder"
+  #               in: "path"
+  #               required: true
+  #               schema:
+  #                 type: "string"
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Content-Length:
+  #                     schema:
+  #                       type: "string"
+  #                   Timestamp:
+  #                     schema:
+  #                       type: "string"
+  #                   Content-Type:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             security:
+  #             - sigv4: []
+  #             x-amazon-apigateway-integration:
+  #               type: "aws"
+  #               httpMethod: "PUT"
+  #               credentials: !GetAtt RoleLogs.Arn
+  #               uri: "arn:aws:apigateway:us-west-2:s3:path/bucket"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Content-Type: "integration.response.header.Content-Type"
+  #                     method.response.header.Content-Length: "integration.response.header.Content-Length"
+  #                     method.response.header.Timestamp: "integration.response.header.Date"
+  #               requestParameters:
+  #                 integration.request.header.x-amz-acl: "'authenticated-read'"
+  #                 integration.request.path.bucket: "method.request.path.folder"
+  #                 integration.request.header.Content-Type: "method.request.header.Content-Type"
+  #               passthroughBehavior: "when_no_match"
+  #         /{folder}/{item}:
+  #           put:
+  #             parameters:
+  #             - name: "item"
+  #               in: "path"
+  #               required: true
+  #               schema:
+  #                 type: "string"
+  #             - name: "folder"
+  #               in: "path"
+  #               required: true
+  #               schema:
+  #                 type: "string"
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               type: "aws"
+  #               httpMethod: "PUT"
+  #               credentials: !GetAtt RoleLogs.Arn
+  #               uri: "arn:aws:apigateway:us-west-2:s3:path/{bucket}/{object}"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #               requestParameters:
+  #                 integration.request.path.object: "method.request.path.item"
+  #                 integration.request.path.bucket: "method.request.path.folder"
+  #               passthroughBehavior: "when_no_match"
+  #         /convertest:
+  #           post:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               uri: !Sub 
+  #                 - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
+  #                 - {Lambda: !Ref ConversationTests}
+  #               httpMethod: "POST"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"
+  #         /user:
+  #           post:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${UserService}/invocations
+  #               httpMethod: "POST"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"
+  #         /metrics:
+  #           get:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MetricsService}/invocations
+  #               httpMethod: "POST"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               contentHandling: "CONVERT_TO_TEXT"
+  #               type: "aws"
+  #           post:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MetricsService}/invocations
+  #               httpMethod: "POST"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"      
+  #         /clients:
+  #           post:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               uri: !Sub 
+  #                 - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
+  #                 - {Lambda: !Ref ClientService}
+  #               httpMethod: "POST"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"
+  #         /conversation:
+  #           post:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               uri: !Sub 
+  #                 - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
+  #                 - {Lambda: !Ref ConversationService}
+  #               httpMethod: "POST"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"
+  #         /reports:
+  #           post:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${ReportsService}/invocations
+  #               httpMethod: "POST"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"
+  #         /token:
+  #           get:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               httpMethod: "POST"
+  #               uri: !Sub 
+  #                 - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
+  #                 - {Lambda: !Ref TwilioToken}
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"
+  #         /start:
+  #           get:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   text/xml:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               httpMethod: "POST"
+  #               uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${TwilioStart}/invocations
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws_proxy"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   text/xml:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"
+  #         /engine:
+  #           get:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   text/xml:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               httpMethod: "POST"
+  #               uri: !Sub 
+  #                 - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lambda}/invocations
+  #                 - {Lambda: !Ref TwilioEngine}
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws_proxy"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   text/xml:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"
+  #         /SnipsTrainer:
+  #           post:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${SnipsTrainer}/invocations
+  #               httpMethod: "POST"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"
+  #         /SemanticDistanceTrainer:
+  #           post:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${SemanticDistanceTrainer}/invocations
+  #               httpMethod: "POST"
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "aws"
+  #           options:
+  #             responses:
+  #               "200":
+  #                 description: "200 response"
+  #                 headers:
+  #                   Access-Control-Allow-Origin:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Methods:
+  #                     schema:
+  #                       type: "string"
+  #                   Access-Control-Allow-Headers:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   application/json:
+  #                     schema:
+  #                       $ref: "#/components/schemas/Empty"
+  #             x-amazon-apigateway-integration:
+  #               responses:
+  #                 default:
+  #                   statusCode: "200"
+  #                   responseParameters:
+  #                     method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+  #                     method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  #                     method.response.header.Access-Control-Allow-Origin: "'*'"
+  #               passthroughBehavior: "when_no_match"
+  #               type: "mock"
+  #       components:
+  #         schemas:
+  #           Empty:
+  #             title: "Empty Schema"
+  #             type: "object"
+  #       x-amazon-apigateway-binary-media-types:
+  #       - "*/*"
+  #     Mode: overwrite
+  # ImplementacionAPIS:
+    # Type: AWS::ApiGateway::Deployment
+    # Properties:
+    #   RestApiId: !Ref PointAccess
+    #   Description: OPEN API
+    #   StageName: !Ref Env
 Outputs:
   WebSocketUser:
     Description: "Socket Usuario"
-    Value: !Join [ '', [ 'wss://', !Ref WebsocketUser, '.execute-api.', !Ref 'AWS::Region', '.amazonaws.com/', !Ref StageUser]]
+    Value: !Join [ '', [ 'wss://', !Ref SocketUser, '.execute-api.', !Ref 'AWS::Region', '.amazonaws.com/', !Ref StageUser]]
   WebSocketAgent:
     Description: "Socket Agente"
-    Value: !Join [ '', [ 'wss://', !Ref WebsocketAgent, '.execute-api.', !Ref 'AWS::Region', '.amazonaws.com/', !Ref StageAgent]]
-  ApiGeneral:
-    Description: "API para FRONT-END"
-    Value: !Join [ '', [ 'https://', !Ref PointAccess, '.execute-api.', !Ref 'AWS::Region', '.amazonaws.com/', !Ref Env]]
+    Value: !Join [ '', [ 'wss://', !Ref SocketAgent, '.execute-api.', !Ref 'AWS::Region', '.amazonaws.com/', !Ref StageAgent]]
+  # ApiGeneral:
+  #   Description: "API para FRONT-END"
+  #   Value: !Join [ '', [ 'https://', !Ref PointAccess, '.execute-api.', !Ref 'AWS::Region', '.amazonaws.com/', !Ref Env]]
   RolFullAccess:
     Description: "Rol para todas las herramientas"
     Value: !GetAtt RoleLogs.Arn
