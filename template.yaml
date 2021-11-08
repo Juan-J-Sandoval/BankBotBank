@@ -47,7 +47,7 @@ Resources:
   RoleLogs:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: !Sub RolGeneral-${Version}-${Env}
+      RoleName: !Sub RolGeneral-${Vers}-${Env}
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -69,7 +69,7 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Policies: 
-        - PolicyName: !Sub PolicyGeneral-${Version}-${Env}
+        - PolicyName: !Sub PolicyGeneral-${Vers}-${Env}
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -94,12 +94,12 @@ Resources:
   S3General:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub files-${Version}-${Env}
+      BucketName: !Sub files-${Vers}-${Env}
   #Socket User
   SocketUser:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: !Sub socket_user-${Version}-${Env}
+      Name: !Sub socket_user-${Vers}-${Env}
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
   RutaConexionUser:
@@ -180,7 +180,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SocketConnectUser-${Version}-${Env}
+      FunctionName: !Sub SocketConnectUser-${Vers}-${Env}
       CodeUri: SocketConnectUser
       Role: !GetAtt RoleLogs.Arn
   PermisosSocketConnectUser:
@@ -198,7 +198,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SocketDisconnectUser-${Version}-${Env}
+      FunctionName: !Sub SocketDisconnectUser-${Vers}-${Env}
       CodeUri: SocketDisconnectUser
       Role: !GetAtt RoleLogs.Arn
   PermisosSocketDisconnectUser:
@@ -216,7 +216,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SocketMensajeUser-${Version}-${Env}
+      FunctionName: !Sub SocketMensajeUser-${Vers}-${Env}
       CodeUri: SocketMensajeUser
       Role: !GetAtt RoleLogs.Arn
       Environment:
@@ -235,7 +235,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Api
     Properties:
       Description: 'BankBot'
-      Name: !Sub socket_agente-${Version}-${Env}
+      Name: !Sub socket_agente-${Vers}-${Env}
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
   RutaConexionAgent:
@@ -318,7 +318,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SocketConnectAgent-${Version}-${Env}
+      FunctionName: !Sub SocketConnectAgent-${Vers}-${Env}
       CodeUri: SocketConnectAgent
       Role: !GetAtt RoleLogs.Arn
   PermisosSocketConnectAgent:
@@ -336,7 +336,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SocketDisconnectAgent-${Version}-${Env}
+      FunctionName: !Sub SocketDisconnectAgent-${Vers}-${Env}
       CodeUri: SocketDisconnectAgent
       Role: !GetAtt RoleLogs.Arn
   PermisosSocketDisconnectAgent:
@@ -354,7 +354,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SocketMensajeAgent-${Version}-${Env}
+      FunctionName: !Sub SocketMensajeAgent-${Vers}-${Env}
       CodeUri: SocketMensajeAgent
       Role: !GetAtt RoleLogs.Arn
       Environment:
@@ -372,7 +372,7 @@ Resources:
   ConversationFlow:
     Type: AWS::Serverless::StateMachine
     Properties:
-      Name: !Sub ConversationFlow-${Version}-${Env}
+      Name: !Sub ConversationFlow-${Vers}-${Env}
       DefinitionUri: StateMachine/StateMachineBankBot.asl.json
       DefinitionSubstitutions:
         SFPasoUnoArn: !GetAtt SFPasoUno.Arn
@@ -391,7 +391,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SFPasoUno-${Version}-${Env}
+      FunctionName: !Sub SFPasoUno-${Vers}-${Env}
       CodeUri: SFPasoUno
       Role: !GetAtt RoleLogs.Arn
   SFMensajeX:
@@ -401,7 +401,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SFMensajeX-${Version}-${Env}
+      FunctionName: !Sub SFMensajeX-${Vers}-${Env}
       CodeUri: SFMensajeX
       Role: !GetAtt RoleLogs.Arn
   SFSeguros:
@@ -411,7 +411,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SFSeguros-${Version}-${Env}
+      FunctionName: !Sub SFSeguros-${Vers}-${Env}
       CodeUri: SFSeguros
       Role: !GetAtt RoleLogs.Arn
   SFAclaraciones:
@@ -421,7 +421,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SFAclaraciones-${Version}-${Env}
+      FunctionName: !Sub SFAclaraciones-${Vers}-${Env}
       CodeUri: SFAclaraciones
       Role: !GetAtt RoleLogs.Arn
   SFCuentas:
@@ -431,7 +431,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SFCuentas-${Version}-${Env}
+      FunctionName: !Sub SFCuentas-${Vers}-${Env}
       CodeUri: SFCuentas
       Role: !GetAtt RoleLogs.Arn
   SFCreditos:
@@ -441,7 +441,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SFCreditos-${Version}-${Env}
+      FunctionName: !Sub SFCreditos-${Vers}-${Env}
       CodeUri: SFCreditos
       Role: !GetAtt RoleLogs.Arn
   SFPasoTres:
@@ -451,7 +451,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SFPasoTres-${Version}-${Env}
+      FunctionName: !Sub SFPasoTres-${Vers}-${Env}
       CodeUri: SFPasoTres
       Role: !GetAtt RoleLogs.Arn
   #Motores de PLN
@@ -462,7 +462,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub GoogleSearch-${Version}-${Env}
+      FunctionName: !Sub GoogleSearch-${Vers}-${Env}
       CodeUri: GoogleSearch
       Layers: 
         - !Ref LayerGoogle
@@ -470,7 +470,7 @@ Resources:
   LayerGoogle:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: !Sub LayerGoogle-${Version}-${Env}
+      LayerName: !Sub LayerGoogle-${Vers}-${Env}
       ContentUri: Layers/google
       CompatibleRuntimes:
         - python3.8
@@ -484,7 +484,7 @@ Resources:
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub SemanticDistance-${Version}-${Env}
+      FunctionName: !Sub SemanticDistance-${Vers}-${Env}
       CodeUri: SemanticDistance
       Layers:
         - !Ref LayerDistance
@@ -492,7 +492,7 @@ Resources:
   LayerDistance:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: !Sub LayerDistance-${Version}-${Env}
+      LayerName: !Sub LayerDistance-${Vers}-${Env}
       ContentUri: Layers/distancia
       CompatibleRuntimes:
         - python3.8
@@ -506,7 +506,7 @@ Resources:
       Timeout: 30
       MemorySize: 512
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub Snips-${Version}-${Env}
+      FunctionName: !Sub Snips-${Vers}-${Env}
       CodeUri: Snips
       Environment:
         Variables:
@@ -522,13 +522,13 @@ Resources:
       Timeout: 29
       MemorySize: 512
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub EntidadesPLN-${Version}-${Env}
+      FunctionName: !Sub EntidadesPLN-${Vers}-${Env}
       CodeUri: EntidadesPLN
       Role: !GetAtt RoleLogs.Arn
   LayerSnips:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: !Sub LayerSnips-${Version}-${Env}
+      LayerName: !Sub LayerSnips-${Vers}-${Env}
       ContentUri: Layers/snips
       CompatibleRuntimes:
         - python3.8
@@ -543,7 +543,7 @@ Resources:
   #     Timeout: 29
   #     MemorySize: 128
   #     Handler: lambda_function.lambda_handler
-  #     FunctionName: !Sub Lex-${Version}-${Env}
+  #     FunctionName: !Sub Lex-${Vers}-${Env}
   #     CodeUri: Lex
   #     Role: !GetAtt RoleLogs.Arn
   # PermisosLex:
