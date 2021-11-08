@@ -52,10 +52,9 @@ phases:
         --stack-name BankBot-${Env}
         --region ${AWS_DEFAULT_REGION}
         --parameter-overrides Env=${Env} Version=$(Version)
-        --SecretManage=${SecretManage} ClusterArn=${ClusterArn} 
+          SecretManage=${SecretManage} ClusterArn=${ClusterArn} 
         --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
         --kms-key-id ${CODEBUILD_KMS_KEY_ID}
-        --image-repository ${ecrLambda}
         --no-confirm-changeset
 
 artifacts:
