@@ -10,7 +10,7 @@ env:
     # DBTableName: "chatbotqna"
     # BotName: "DigitalConnectQNA"
     # BotAlias: "digitalconnectqna"
-    # s3Pipeline: "codepipeline-us-west-2-598446214898"
+    s3Pipeline: "pipeline-bankbot"
     # ecrLambda: 959525568826.dkr.ecr.us-west-2.amazonaws.com/snipstrainerqna
     # Email: zafir@digitalconnect.com.mx
     # PassEmail: desarrolloDC
