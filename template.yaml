@@ -536,17 +536,17 @@ Resources:
     Metadata:
       BuildMethod: python3.8
   #Lex
-  Lex:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub Lex-${Version}-${Env}
-      CodeUri: Lex
-      Role: !GetAtt RoleLogs.Arn
-  PermisosLex:
+  # Lex:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Runtime: python3.8
+  #     Timeout: 29
+  #     MemorySize: 128
+  #     Handler: lambda_function.lambda_handler
+  #     FunctionName: !Sub Lex-${Version}-${Env}
+  #     CodeUri: Lex
+  #     Role: !GetAtt RoleLogs.Arn
+  # PermisosLex:
     Type: AWS::Lambda::Permission
     DependsOn:
       - PointAccess
