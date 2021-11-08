@@ -5,8 +5,8 @@ env:
   variables:
     Version: "bank"
     Env: "dev"
-    # SecretManage: "arn:aws:secretsmanager:us-west-2:959525568826:secret:CredencialDBqna-xlt6Ij"
-    # ClusterArn: "arn:aws:rds:us-west-2:959525568826:cluster:chatbotqna"
+    SecretManage: "arn:aws:secretsmanager:us-west-2:959525568826:secret:CredencialDBBankBotdev-mbHFbO"
+    ClusterArn: "arn:aws:rds:us-west-2:959525568826:cluster:bankbotdev"
     # DBTableName: "chatbotqna"
     # BotName: "DigitalConnectQNA"
     # BotAlias: "digitalconnectqna"
@@ -52,6 +52,7 @@ phases:
         --stack-name BankBot-${Env}
         --region ${AWS_DEFAULT_REGION}
         --parameter-overrides Env=${Env} Version=$(Version)
+        --SecretManage=${SecretManage} ClusterArn=${ClusterArn} 
         --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
         --kms-key-id ${CODEBUILD_KMS_KEY_ID}
         --image-repository ${ecrLambda}

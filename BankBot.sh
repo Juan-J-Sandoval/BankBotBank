@@ -31,7 +31,7 @@ echo DBClusterArn
 read arnCluster
 echo CREACION DE SECRET MANAGER
 aws secretsmanager create-secret \
---name "CredencialDB$env" \
+--name "CredencialDBBankBot$env" \
 --secret-string '{
     "dbInstanceIdentifier": "'$BDName'",
     "engine": "aurora-mysql",
@@ -46,7 +46,7 @@ echo Copia y pega el ARN
 read SecretsManager
 echo CREACION DE REPOSITORIO
 aws ecr create-repository \
---repository-name "snipstrainer$env" \
+--repository-name "snipstrainerBankBot$env" \
 --image-tag-mutability IMMUTABLE \
 --profile dev
 echo Copia y pega el repositoryUri

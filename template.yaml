@@ -13,14 +13,14 @@ Parameters:
     Default: Env
     Type: String
     Description: Variable que indica el entorno en el que se va a desplegar la plantilla
-  # SecretManage:
-  #   Description: Arn del secret manage
-  #   Type: String
-  #   Default: arn
-  # ClusterArn:
-  #   Description: Arn de la base de datos
-  #   Type: String
-  #   Default: arn
+  SecretManage:
+    Description: Arn del secret manage
+    Type: String
+    Default: arn
+  ClusterArn:
+    Description: Arn de la base de datos
+    Type: String
+    Default: arn
   # DBTableName:
   #   Description: Nombre de la tabla creada
   #   Type: String
