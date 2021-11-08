@@ -5,7 +5,7 @@ Description: >
 
 
 Parameters:
-  Version:
+  Vers:
     Default: banco
     Type: String
     Description: Variable que indica el entorno en el que se va a desplegar la plantilla
