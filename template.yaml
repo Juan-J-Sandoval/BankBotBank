@@ -547,13 +547,13 @@ Resources:
   #     CodeUri: Lex
   #     Role: !GetAtt RoleLogs.Arn
   # PermisosLex:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - PointAccess
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref Lex
-      Principal: apigateway.amazonaws.com
+    # Type: AWS::Lambda::Permission
+    # DependsOn:
+    #   - PointAccess
+    # Properties:
+    #   Action: lambda:InvokeFunction
+    #   FunctionName: !Ref Lex
+    #   Principal: apigateway.amazonaws.com
   #Conexiones a Aurora Serverless
   # ConversationTests:
   #   Type: AWS::Serverless::Function
