@@ -1,10 +1,10 @@
 {
     "Comment": "Prueba 01 de flujo de conversacion",
-    "StartAt": "ie",
+    "StartAt": "uno",
     "States": {
       "ie": {
         "Type": "Task",
-        "Resource": "${SFIdentificaEstadoArn}",
+        "Resource": "${SFPasoUnoArn}",
         "InputPath": "$",
         "OutputPath": "$",
         "Next": "motores"
@@ -14,45 +14,69 @@
         "Choices": [
           {
             "Variable": "$.estado",
-            "StringEquals": "cm",
-            "Next": "cm"
+            "StringEquals": "mensajex",
+            "Next": "mensajex"
           },
           {
             "Variable": "$.estado",
-            "StringEquals": "cv",
-            "Next": "cv"
+            "StringEquals": "aclaracion",
+            "Next": "aclaracion"
           },
           {
             "Variable": "$.estado",
-            "StringEquals": "cr",
-            "Next": "cr"
+            "StringEquals": "credito",
+            "Next": "credito"
+          },
+          {
+            "Variable": "$.estado",
+            "StringEquals": "cuenta",
+            "Next": "cuenta"
+          },
+          {
+            "Variable": "$.estado",
+            "StringEquals": "seguro",
+            "Next": "seguro"
           }
         ]
       },
-      "cm": {
+      "mensajex": {
         "Type": "Task",
-        "Resource": "${SFCualquierMensajeArn}",
+        "Resource": "${SFMensajeXArn}",
         "InputPath": "$",
         "OutputPath": "$",
-        "Next": "ad"
+        "Next": "tres"
       },
-      "cv": {
+      "aclaracion": {
         "Type": "Task",
-        "Resource": "${SFCapturaVentaArn}",
+        "Resource": "${SFAclaracionesArn}",
         "InputPath": "$",
         "OutputPath": "$",
-        "Next": "ad"
+        "Next": "tres"
       },
-      "cr": {
+      "credito": {
         "Type": "Task",
-        "Resource": "${SFCapturaReclutaArn}",
+        "Resource": "${SFCreditosArn}",
         "InputPath": "$",
         "OutputPath": "$",
-        "Next": "ad"
+        "Next": "tres"
       },
-      "ad": {
+      "cuenta": {
         "Type": "Task",
-        "Resource": "${SFActualizaDatosArn}",
+        "Resource": "${SFCuentasArn}",
+        "InputPath": "$",
+        "OutputPath": "$",
+        "Next": "tres"
+      },
+      "seguro": {
+        "Type": "Task",
+        "Resource": "${SFSegurosArn}",
+        "InputPath": "$",
+        "OutputPath": "$",
+        "Next": "tres"
+      },
+      "tres": {
+        "Type": "Task",
+        "Resource": "${SFPasoTresArn}",
         "InputPath": "$",
         "OutputPath": "$",
         "End": true
