@@ -2,7 +2,7 @@
     "Comment": "Prueba 01 de flujo de conversacion",
     "StartAt": "uno",
     "States": {
-      "ie": {
+      "uno": {
         "Type": "Task",
         "Resource": "${SFPasoUnoArn}",
         "InputPath": "$",
