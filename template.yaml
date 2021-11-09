@@ -21,18 +21,18 @@ Parameters:
     Description: Arn de la base de datos
     Type: String
     Default: arn
-  # DBTableName:
-  #   Description: Nombre de la tabla creada
-  #   Type: String
-  #   Default: BankBot
-  # BotName:
-  #   Default: TestGV
-  #   Type: String
-  #   Description: Nombre del bot que esta en Lex y se encuentra en LexData.json
-  # BotAlias:
-  #   Default: TestGV
-  #   Type: String
-  #   Description: Alias del bot que esta en Lex y se encuentra en la consola de lex
+  DBTableName:
+    Description: Nombre de la tabla creada
+    Type: String
+    Default: BankBot
+  BotName:
+    Default: TestGV
+    Type: String
+    Description: Nombre del bot que esta en Lex y se encuentra en LexData.json
+  BotAlias:
+    Default: TestGV
+    Type: String
+    Description: Alias del bot que esta en Lex y se encuentra en la consola de lex
   # Email:
   #   Default: zafir@digitalconnect.com.mx
   #   Type: String
@@ -201,6 +201,11 @@ Resources:
       FunctionName: !Sub SocketDisconnectUser-${Vers}-${Env}
       CodeUri: SocketDisconnectUser
       Role: !GetAtt RoleLogs.Arn
+      Environment:
+        Variables:
+          cluster_arn_aurora: !Ref ClusterArn
+          secret_arn_aurora: !Ref SecretManage
+          name_db: !Ref DBTableName
   PermisosSocketDisconnectUser:
     Type: AWS::Lambda::Permission
     DependsOn:
@@ -221,6 +226,10 @@ Resources:
       Role: !GetAtt RoleLogs.Arn
       Environment:
         Variables:
+          STATE_MACHINE: !Ref ConversationFlow
+          cluster_arn_aurora: !Ref ClusterArn
+          secret_arn_aurora: !Ref SecretManage
+          name_db: !Ref DBTableName
           socketAgente: !Join [ '', [ 'https://', !Ref SocketAgent, '.execute-api.', !Ref 'AWS::Region', '.amazonaws.com/', !Ref Env]]
   PermisosSocketMensajeUser:
     Type: AWS::Lambda::Permission
@@ -321,6 +330,11 @@ Resources:
       FunctionName: !Sub SocketConnectAgent-${Vers}-${Env}
       CodeUri: SocketConnectAgent
       Role: !GetAtt RoleLogs.Arn
+      Environment:
+        Variables:
+          cluster_arn_aurora: !Ref ClusterArn
+          secret_arn_aurora: !Ref SecretManage
+          name_db: !Ref DBTableName
   PermisosSocketConnectAgent:
     Type: AWS::Lambda::Permission
     DependsOn:
@@ -339,6 +353,11 @@ Resources:
       FunctionName: !Sub SocketDisconnectAgent-${Vers}-${Env}
       CodeUri: SocketDisconnectAgent
       Role: !GetAtt RoleLogs.Arn
+      Environment:
+        Variables:
+          cluster_arn_aurora: !Ref ClusterArn
+          secret_arn_aurora: !Ref SecretManage
+          name_db: !Ref DBTableName
   PermisosSocketDisconnectAgent:
     Type: AWS::Lambda::Permission
     DependsOn:
@@ -359,6 +378,9 @@ Resources:
       Role: !GetAtt RoleLogs.Arn
       Environment:
         Variables:
+          cluster_arn_aurora: !Ref ClusterArn
+          secret_arn_aurora: !Ref SecretManage
+          name_db: !Ref DBTableName
           socketUsuario: !Join [ '', [ 'https://', !Ref SocketUser, '.execute-api.', !Ref AWS::Region, '.amazonaws.com/', !Ref Env]]
   PermisosSocketMensajeAgent:
     Type: AWS::Lambda::Permission
@@ -394,6 +416,9 @@ Resources:
       FunctionName: !Sub SFPasoUno-${Vers}-${Env}
       CodeUri: SFPasoUno
       Role: !GetAtt RoleLogs.Arn
+      Environment:
+        Variables:
+          ConversationService: !Ref ConversationService
   SFMensajeX:
     Type: AWS::Serverless::Function
     Properties:
@@ -404,6 +429,15 @@ Resources:
       FunctionName: !Sub SFMensajeX-${Vers}-${Env}
       CodeUri: SFMensajeX
       Role: !GetAtt RoleLogs.Arn
+      Environment:
+        Variables:
+          GoogleSearch: !Ref GoogleSearchLambda
+          SemanticDistance: !Ref SemanticDistance
+          Snips: !Ref Snips
+          BOT_NAME: !Ref BotName
+          BOT_ALIAS: !Ref BotAlias
+          BUCKET_NAME: !Ref S3General
+          BOT_DATA_FILE: responseDatas.json
   SFSeguros:
     Type: AWS::Serverless::Function
     Properties:

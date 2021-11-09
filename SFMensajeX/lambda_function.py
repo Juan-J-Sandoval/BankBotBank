@@ -1,82 +1,82 @@
 import json, boto3, os, decimal, os, re
-# lex = boto3.client('lex-runtime')
-# lambdas = boto3.client('lambda')
-# lambdaSnips = os.environ['Snips']
-# lambdaSemanticDistance = os.environ['SemanticDistance']
-# lambdaGoogle = os.environ['GoogleSearch']
+lex = boto3.client('lex-runtime')
+lambdas = boto3.client('lambda')
+lambdaSnips = os.environ['Snips']
+lambdaSemanticDistance = os.environ['SemanticDistance']
+lambdaGoogle = os.environ['GoogleSearch']
 
-# bucket_name = os.environ['BUCKET_NAME']
-# bot_data_file = os.environ['BOT_DATA_FILE']
-# s3 = boto3.client('s3')
-# s3.download_file(bucket_name,bot_data_file,"/tmp/"+bot_data_file)
-# f = open("/tmp/"+bot_data_file, "r")
-# content = f.read()
-# dataBot = json.loads(content)
+bucket_name = os.environ['BUCKET_NAME']
+bot_data_file = os.environ['BOT_DATA_FILE']
+s3 = boto3.client('s3')
+s3.download_file(bucket_name,bot_data_file,"/tmp/"+bot_data_file)
+f = open("/tmp/"+bot_data_file, "r")
+content = f.read()
+dataBot = json.loads(content)
 
 
 def lambda_handler(event, context):
-#     print(">>> ",event)
-#     respuesta = ""
-#     estado = event["estado"]
-#     intent = ""
-#     #se envián los datos a lex para analizar su respuesta
-#     lexJSON = lexBot(event["mensaje"])
-#     if lexJSON['score'] > 0:
-#         respuesta=lexJSON['respuesta']
-#         intent = lexJSON['intent']
-#         motor='lex'
-#         score = lexJSON['score']
-#     else:
-#         #si lex no tiene respuesta se envía a Snips
-#         snipsJSON = snips(event["mensaje"])
-#         if snipsJSON['score'] > 0:
-#             respuesta=snipsJSON['respuesta']
-#             intent = snipsJSON['intent']
-#             motor='snips'
-#             score = snipsJSON['score']
-#         else:
-#             #si snips no tiene respuesta se envía a distancia semantica
-#             distanciaJSON = distancia(event["mensaje"])
-#             if distanciaJSON['score'] > 0.4:
-#                 respuesta=distanciaJSON['respuesta']
-#                 intent = distanciaJSON['intent']
-#                 motor='distance'
-#                 score = distanciaJSON['score']
-#             else:
-#                 #por últimmo si nadie tiene respuesta contesta GoogleSearch
-#                 GoogleJSON = Google(event["mensaje"])
-#                 respuesta = GoogleJSON['respuesta']
-#                 intent = "Default"
-#                 motor='google'
-#                 score = 0
-#     #verifica el estado en el que debe pasar para la siguiente respuesta
-#     if intent == 'venta' or intent == 'ventaea':
-#         estado='cv'
-#     elif intent == 'recluta':
-#         estado='cr'
-#     retornar = {'respuesta':respuesta,'mensaje':event["mensaje"],'estado':estado,'sessionID':event['sessionID'],"n_pregunta":event["n_pregunta"],
-#         "intent":intent,"motor":motor, "score": score}
-#     print("<<< ",retornar)
-#     return retornar
+    print(">>> ",event)
+    respuesta = ""
+    estado = event["estado"]
+    intent = ""
+    #se envián los datos a lex para analizar su respuesta
+    lexJSON = lexBot(event["mensaje"])
+    if lexJSON['score'] > 0:
+        respuesta=lexJSON['respuesta']
+        intent = lexJSON['intent']
+        motor='lex'
+        score = lexJSON['score']
+    else:
+        #si lex no tiene respuesta se envía a Snips
+        snipsJSON = snips(event["mensaje"])
+        if snipsJSON['score'] > 0:
+            respuesta=snipsJSON['respuesta']
+            intent = snipsJSON['intent']
+            motor='snips'
+            score = snipsJSON['score']
+        else:
+            #si snips no tiene respuesta se envía a distancia semantica
+            distanciaJSON = distancia(event["mensaje"])
+            if distanciaJSON['score'] > 0.4:
+                respuesta=distanciaJSON['respuesta']
+                intent = distanciaJSON['intent']
+                motor='distance'
+                score = distanciaJSON['score']
+            else:
+                #por últimmo si nadie tiene respuesta contesta GoogleSearch
+                GoogleJSON = Google(event["mensaje"])
+                respuesta = GoogleJSON['respuesta']
+                intent = "Default"
+                motor='google'
+                score = 0
+    #verifica el estado en el que debe pasar para la siguiente respuesta
+    if intent == 'venta' or intent == 'ventaea':
+        estado='cv'
+    elif intent == 'recluta':
+        estado='cr'
+    retornar = {'respuesta':respuesta,'mensaje':event["mensaje"],'estado':estado,'sessionID':event['sessionID'],"n_pregunta":event["n_pregunta"],
+        "intent":intent,"motor":motor, "score": score}
+    print("<<< ",retornar)
+    return retornar
 
-# def snips(mensaje):
-#     snipsIntent = ""
-#     snipsScore = 0
-#     snipsRespuesta = ""
-#     #se configura el json que debe ser envíado a la lambda de snips
-#     j={"bot":"grupovanguardia","message":mensaje,"toggledEntities":{"SYS.TELEFONO":"True","SYS.NOMBRE":"True"}}
-#     respSnips = lambdas.invoke(FunctionName=lambdaSnips,Payload=json.dumps(j))
-#     respSnips = json.load(respSnips['Payload'])
-#     print("snips ",respSnips)
-#     respSnips = respSnips['body']
-#     snipsIntent = respSnips['intent']['intentName']
-#     #se analiza que la respuesta tenga un escore mayor a 7
-#     if float(respSnips['intent']['probability']) > 0.80:
-#         snipsScore=respSnips['intent']['probability']
-#         for i in dataBot["ResponseData"]:
-#             if i['name'] == snipsIntent:
-#                 snipsRespuesta=i['response']
-    return #{'respuesta': snipsRespuesta, 'intent':snipsIntent, 'score':snipsScore}
+def snips(mensaje):
+    snipsIntent = ""
+    snipsScore = 0
+    snipsRespuesta = ""
+    #se configura el json que debe ser envíado a la lambda de snips
+    j={"bot":"grupovanguardia","message":mensaje,"toggledEntities":{"SYS.TELEFONO":"True","SYS.NOMBRE":"True"}}
+    respSnips = lambdas.invoke(FunctionName=lambdaSnips,Payload=json.dumps(j))
+    respSnips = json.load(respSnips['Payload'])
+    print("snips ",respSnips)
+    respSnips = respSnips['body']
+    snipsIntent = respSnips['intent']['intentName']
+    #se analiza que la respuesta tenga un escore mayor a 7
+    if float(respSnips['intent']['probability']) > 0.80:
+        snipsScore=respSnips['intent']['probability']
+        for i in dataBot["ResponseData"]:
+            if i['name'] == snipsIntent:
+                snipsRespuesta=i['response']
+    return {'respuesta': snipsRespuesta, 'intent':snipsIntent, 'score':snipsScore}
 def lexBot(mensaje):
     lexScore=0
     lexIntent = ""
