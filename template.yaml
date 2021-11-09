@@ -687,24 +687,21 @@ Resources:
   #     Action: lambda:InvokeFunction
   #     FunctionName: !Ref ConversationService
   #     Principal: apigateway.amazonaws.com
-  # UserService:
-  #   Type: AWS::Serverless::Function
-  #   Properties:
-  #     Runtime: python3.8
-  #     Timeout: 29
-  #     MemorySize: 128
-  #     Handler: lambda_function.lambda_handler
-  #     FunctionName: !Sub UserService-${Env}
-  #     CodeUri: UserService
-  #     Description: BankBot
-  #     Role: !GetAtt RoleLogs.Arn
-  #     Environment:
-  #       Variables:
-  #         email_host: !Ref Email
-  #         pass_email: !Ref PassEmail
-  #         cluster_arn_aurora: !Ref ClusterArn
-  #         secret_arn_aurora: !Ref SecretManage
-  #         name_db: !Ref DBTableName
+  UserService:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.8
+      Timeout: 29
+      MemorySize: 128
+      Handler: lambda_function.lambda_handler
+      FunctionName: !Sub UserService-${Vers}-${Env}
+      CodeUri: UserService
+      Role: !GetAtt RoleLogs.Arn
+      Environment:
+        Variables:
+          cluster_arn_aurora: !Ref ClusterArn
+          secret_arn_aurora: !Ref SecretManage
+          name_db: !Ref DBTableName
   # PermisosUserService:
   #   Type: AWS::Lambda::Permission
   #   DependsOn:
