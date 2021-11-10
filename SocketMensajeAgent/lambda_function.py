@@ -47,27 +47,27 @@ def QueryConversation(idSocket):
         return {}
 
 
-# def responseQuery(payload_item):
-#     rows = []
-#     cols = []
-#     for column in payload_item['columnMetadata']:
-#         cols.append(column['name'])
-#     for record in payload_item['records'] :
-#         i = 0
-#         row = {}
-#         for item in record:
-#             if 'stringValue' in item  :
-#                 row[cols[i]] = item['stringValue']
-#             elif 'blobValue' in item :
-#                 row[cols[i]] = item['blobValue']
-#             elif 'doubleValue' in item :
-#                 row[cols[i]] = item['doubleValue']
-#             elif 'longValue' in item :
-#                 row[cols[i]] = item['longValue']
-#             elif 'booleanValue' in item:
-#                 row[cols[i]] = item['booleanValue']
-#             else :
-#                 row[cols[i]] = None
-#             i += 1
-#         rows.append(row)
-#     return rows
+def responseQuery(payload_item):
+    rows = []
+    cols = []
+    for column in payload_item['columnMetadata']:
+        cols.append(column['name'])
+    for record in payload_item['records'] :
+        i = 0
+        row = {}
+        for item in record:
+            if 'stringValue' in item  :
+                row[cols[i]] = item['stringValue']
+            elif 'blobValue' in item :
+                row[cols[i]] = item['blobValue']
+            elif 'doubleValue' in item :
+                row[cols[i]] = item['doubleValue']
+            elif 'longValue' in item :
+                row[cols[i]] = item['longValue']
+            elif 'booleanValue' in item:
+                row[cols[i]] = item['booleanValue']
+            else :
+                row[cols[i]] = None
+            i += 1
+        rows.append(row)
+    return rows
