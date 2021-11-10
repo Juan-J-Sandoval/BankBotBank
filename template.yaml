@@ -702,14 +702,14 @@ Resources:
           cluster_arn_aurora: !Ref ClusterArn
           secret_arn_aurora: !Ref SecretManage
           name_db: !Ref DBTableName
-  # PermisosUserService:
-  #   Type: AWS::Lambda::Permission
-  #   DependsOn:
-  #     - PointAccess
-  #   Properties:
-  #     Action: lambda:InvokeFunction
-  #     FunctionName: !Ref UserService
-  #     Principal: apigateway.amazonaws.com
+  PermisosUserService:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - PointAccess
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref UserService
+      Principal: apigateway.amazonaws.com
   # ReportsService:
   #   Type: AWS::Serverless::Function
   #   Properties:
