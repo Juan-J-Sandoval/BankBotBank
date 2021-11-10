@@ -23,7 +23,7 @@ def lambda_handler(event, context):
             stateMachineArn=os.environ['STATE_MACHINE'],
             input=str(sf_data))
         mensajeBot=json.loads(sf_respuesta['output'])
-        if json.loads(sf_respuesta['output'])['intent'] == 'atencionagente':
+        if json.loads(sf_respuesta['output'])['intent'] == 'agentehabla':
             query=QueryAsignacion(event['requestContext']['connectionId'])
             print('segundo query',query)
             if 'idSocket' in query:

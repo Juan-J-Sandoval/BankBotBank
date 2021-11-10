@@ -64,7 +64,7 @@ def snips(mensaje):
     snipsScore = 0
     snipsRespuesta = ""
     #se configura el json que debe ser envíado a la lambda de snips
-    j={"bot":"grupovanguardia","message":mensaje,"toggledEntities":{"SYS.TELEFONO":"True","SYS.NOMBRE":"True"}}
+    j={"bot":os.environ['BOT_NAME'],"message":mensaje,"toggledEntities":{"SYS.TELEFONO":"True","SYS.NOMBRE":"True"}}
     respSnips = lambdas.invoke(FunctionName=lambdaSnips,Payload=json.dumps(j))
     respSnips = json.load(respSnips['Payload'])
     print("snips ",respSnips)

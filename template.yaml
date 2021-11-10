@@ -861,6 +861,86 @@ Resources:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                 passthroughBehavior: "when_no_match"
                 type: "mock"
+          /{folder}:
+            put:
+              parameters:
+              - name: "Content-Type"
+                in: "header"
+                schema:
+                  type: "string"
+              - name: "folder"
+                in: "path"
+                required: true
+                schema:
+                  type: "string"
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Content-Length:
+                      schema:
+                        type: "string"
+                    Timestamp:
+                      schema:
+                        type: "string"
+                    Content-Type:
+                      schema:
+                        type: "string"
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/Empty"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                type: "aws"
+                httpMethod: "PUT"
+                credentials: !GetAtt RoleLogs.Arn
+                uri: "arn:aws:apigateway:us-west-2:s3:path/bucket"
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Content-Type: "integration.response.header.Content-Type"
+                      method.response.header.Content-Length: "integration.response.header.Content-Length"
+                      method.response.header.Timestamp: "integration.response.header.Date"
+                requestParameters:
+                  integration.request.header.x-amz-acl: "'authenticated-read'"
+                  integration.request.path.bucket: "method.request.path.folder"
+                  integration.request.header.Content-Type: "method.request.header.Content-Type"
+                passthroughBehavior: "when_no_match"
+          /{folder}/{item}:
+            put:
+              parameters:
+              - name: "item"
+                in: "path"
+                required: true
+                schema:
+                  type: "string"
+              - name: "folder"
+                in: "path"
+                required: true
+                schema:
+                  type: "string"
+              responses:
+                "200":
+                  description: "200 response"
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/Empty"
+              x-amazon-apigateway-integration:
+                type: "aws"
+                httpMethod: "PUT"
+                credentials: !GetAtt RoleLogs.Arn
+                uri: "arn:aws:apigateway:us-west-2:s3:path/{bucket}/{object}"
+                responses:
+                  default:
+                    statusCode: "200"
+                requestParameters:
+                  integration.request.path.object: "method.request.path.item"
+                  integration.request.path.bucket: "method.request.path.folder"
+                passthroughBehavior: "when_no_match"
         components:
           schemas:
             Empty:

@@ -8,7 +8,7 @@ env:
     SecretManage: "arn:aws:secretsmanager:us-west-2:959525568826:secret:CredencialDBBankBotdev-mbHFbO"
     ClusterArn: "arn:aws:rds:us-west-2:959525568826:cluster:bankbotdev"
     DBTableName: "BankBotdev"
-    BotName: "BankBotdev"
+    BotName: "BankBotDev"
     BotAlias: "bankbotdev"
     s3Pipeline: "pipeline-bankbot"
     # ecrLambda: 959525568826.dkr.ecr.us-west-2.amazonaws.com/snipstrainerqna
