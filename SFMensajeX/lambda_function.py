@@ -49,11 +49,7 @@ def lambda_handler(event, context):
                 intent = "Default"
                 motor='google'
                 score = 0
-    #verifica el estado en el que debe pasar para la siguiente respuesta
-    if intent == 'venta' or intent == 'ventaea':
-        estado='cv'
-    elif intent == 'recluta':
-        estado='cr'
+    #verifica el estado en el que debe pasar para la siguiente respuesta TODO
     retornar = {'respuesta':respuesta,'mensaje':event["mensaje"],'estado':estado,'sessionID':event['sessionID'],"n_pregunta":event["n_pregunta"],
         "intent":intent,"motor":motor, "score": score}
     print("<<< ",retornar)

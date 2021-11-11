@@ -25,7 +25,7 @@ def lambda_handler(event, context):
    responseFromAPI = json.load(response['Payload'], parse_float=decimal.Decimal)
    print(responseFromAPI)
    
-   retornar = {"respuesta":event["respuesta"],"sessionID":event["sessionID"],"intent":event["intent"]}
+   retornar = {"message":event["respuesta"],"sessionID":event["sessionID"],"intent":event["intent"]}
    print("retornar ",retornar)
    return retornar
    

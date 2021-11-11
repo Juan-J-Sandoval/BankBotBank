@@ -42,7 +42,7 @@ def lambda_handler(event, context):
         responseFromAPI = json.load(response['Payload'], parse_float=decimal.Decimal)
         itemSaved = responseFromAPI["message"]
         print(itemSaved)
-        retonar = {"mensaje":event["mensaje"], "estado":"cm","n_pregunta":0,"sessionID":event["sessionID"]}
+        retonar = {"mensaje":event["mensaje"], "estado":"mensajex","n_pregunta":0,"sessionID":event["sessionID"]}
     print("resultado ",retonar)
     return
     
