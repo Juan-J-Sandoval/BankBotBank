@@ -44,7 +44,7 @@ def lambda_handler(event, context):
         print(itemSaved)
         retonar = {"mensaje":event["mensaje"], "estado":"mensajex","n_pregunta":0,"sessionID":event["sessionID"]}
     print("resultado ",retonar)
-    return
+    return retonar
     
 def handle_decimal_type(obj):
   if isinstance(obj, Decimal):
