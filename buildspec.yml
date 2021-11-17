@@ -12,6 +12,7 @@ env:
     BotAlias: "bankbotdev"
     s3Pipeline: "pipeline-bankbot"
     ecrLambda: 959525568826.dkr.ecr.us-west-2.amazonaws.com/trainerbotbankdev
+    BotDataFile: BankBotDSDev.json
     # Email: zafir@digitalconnect.com.mx
     # PassEmail: desarrolloDC
 
@@ -52,7 +53,7 @@ phases:
         --stack-name BankBot-${Env}
         --region ${AWS_DEFAULT_REGION}
         --parameter-overrides Env=${Env} Vers=${Vers} SecretManage=${SecretManage} ClusterArn=${ClusterArn}
-        DBTableName=${DBTableName} BotName=${BotName} BotAlias=${BotAlias}
+        DBTableName=${DBTableName} BotName=${BotName} BotAlias=${BotAlias} BotDataFile=${BotDataFile}
         --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
         --kms-key-id ${CODEBUILD_KMS_KEY_ID}
         --image-repository ${ecrLambda}

@@ -33,6 +33,10 @@ Parameters:
     Default: TestGV
     Type: String
     Description: Alias del bot que esta en Lex y se encuentra en la consola de lex
+  BotDataFile:
+    Default: BankBotDSDev.json
+    Type: String
+    Description: Archivo con datos de distancia y respuestas de Snips
   # Email:
   #   Default: zafir@digitalconnect.com.mx
   #   Type: String
@@ -437,7 +441,7 @@ Resources:
           BOT_NAME: !Ref BotName
           BOT_ALIAS: !Ref BotAlias
           BUCKET_NAME: !Ref S3General
-          BOT_DATA_FILE: responseDatas.json
+          BOT_DATA_FILE: !Ref BotDataFile
   SFSeguros:
     Type: AWS::Serverless::Function
     Properties:
@@ -582,6 +586,9 @@ Resources:
       Environment:
         Variables:
           MODEL_BUCKET_NAME: !Ref S3General
+          BOT_NAME: !Ref BotName
+          BOT_ALIAS: !Ref BotAlias
+          BOT_DATA_FILE: !Ref BotDataFile
       Role: !GetAtt RoleLogs.Arn
     Metadata:
       Dockerfile: Dockerfile
@@ -595,6 +602,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref TrainerBot
       Principal: apigateway.amazonaws.com
+  #Conexiones a Aurora Serverless
   ConversationService:
     Type: AWS::Serverless::Function
     Properties:
