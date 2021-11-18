@@ -1,4 +1,5 @@
 import boto3, json, os, io, yaml
+from yaml import Loader
 from snips_nlu import SnipsNLUEngine
 from snips_nlu.default_configs import CONFIG_ES
 bucket_name = os.environ['BUCKET_NAME']
@@ -54,7 +55,7 @@ def getData(payload):
     SnipsData=[]
     s3.meta.client.download_file(bucket_name,bot_name+'.yaml',"/tmp/"+bot_name+'.yaml')
     with open("/tmp/"+bot_name+'.yaml') as f:
-        for data in yaml.load_all(f):
+        for data in yaml.load_all(f, Loader=Loader):
             SnipsData.append(data)
     #DistanciaSemantica
     s3.meta.client.download_file(bucket_name,bot_data_file,"/tmp/"+bot_data_file)
