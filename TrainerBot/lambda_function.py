@@ -52,21 +52,22 @@ def trainer(payload):
 def getData(payload):
     #Snips
     SnipsData=[]
-    s3.download_file(bucket_name,bot_name+'.yaml',"/tmp/"+bot_name+'.yaml')
+    s3.meta.client.download_file(bucket_name,bot_name+'.yaml',"/tmp/"+bot_name+'.yaml')
     with open("/tmp/"+bot_name+'.yaml') as f:
         for data in yaml.load_all(f):
             SnipsData.append(data)
     #DistanciaSemantica
-    s3.download_file(bucket_name,bot_data_file,"/tmp/"+bot_data_file)
+    s3.meta.client.download_file(bucket_name,bot_data_file,"/tmp/"+bot_data_file)
     f = open("/tmp/"+bot_data_file, "r")
     content = f.read()
     dataBotDS = json.loads(content)
     #Lex
-    s3.download_file(bucket_name,bot_name+'.json',"/tmp/"+bot_name+'.json')
+    s3.meta.client.download_file(bucket_name,bot_name+'.json',"/tmp/"+bot_name+'.json')
     f = open("/tmp/"+bot_name+'.json', "r")
     content = f.read()
     dataBotLex = json.loads(content)
-    response={"snips":SnipsData,"DS":dataBotDS['ResponseData'],"lex":dataBotLex}
+    #response={"snips":SnipsData,"DS":dataBotDS['ResponseData'],"lex":dataBotLex}
+    response={"snips":SnipsData}
     return {
         "statusCode": 200,
         "body":response
