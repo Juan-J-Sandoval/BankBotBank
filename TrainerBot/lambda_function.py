@@ -1,11 +1,10 @@
 import boto3, json, os, io, yaml
 from snips_nlu import SnipsNLUEngine
 from snips_nlu.default_configs import CONFIG_ES
-bucket_name = os.getenv('MODEL_BUCKET_NAME', "")
+bucket_name = os.environ['BUCKET_NAME']
 nlu_engine = SnipsNLUEngine(config=CONFIG_ES)
 s3 = boto3.resource('s3')
 
-bucket_name = os.environ['BUCKET_NAME']
 bot_data_file = os.environ['BOT_DATA_FILE']
 bot_name = os.environ['BOT_NAME']
 

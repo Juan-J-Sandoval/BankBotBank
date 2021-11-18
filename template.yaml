@@ -585,7 +585,7 @@ Resources:
       Timeout: 60
       Environment:
         Variables:
-          MODEL_BUCKET_NAME: !Ref S3General
+          BUCKET_NAME: !Ref S3General
           BOT_NAME: !Ref BotName
           BOT_ALIAS: !Ref BotAlias
           BOT_DATA_FILE: !Ref BotDataFile
