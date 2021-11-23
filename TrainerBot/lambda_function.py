@@ -12,7 +12,6 @@ bot_data_file = os.environ['BOT_DATA_FILE']
 bot_name = os.environ['BOT_NAME']
 
 
-
 def lambda_handler(event, context):
     payload_dictionary = json.loads(json.dumps(event['payload']))
     operation = event['operation']
@@ -52,7 +51,7 @@ def trainer(payload):
         "body":{"status": "reentrenado"}
     }
 
-def getData(payload):
+def getData():
     #Snips
     SnipsData=[]
     s3.meta.client.download_file(bucket_name,bot_name+'.yaml',"/tmp/"+bot_name+'.yaml')
@@ -69,10 +68,27 @@ def getData(payload):
     f = open("/tmp/"+bot_name+'.json', "r")
     content = f.read()
     dataBotLex = json.loads(content)
+    #Generador de Json unificado
+    examples=[]
+    jsonUnificado={"intent":[],"entity":[]}
+    print("snips>> ",SnipsData)
+    print("DS>> ",dataBotDS['ResponseData'])
+    print("lex>> ",dataBotLex['resource']["intents"])
+    for item in SnipsData:
+        for itemDS in dataBotDS['ResponseData']:
+            if itemDS['name']==item['name']:
+                for itemL in dataBotLex['resource']["intents"]:
+                    if itemL['name']==item['name']:
+                        examples.extend(item["utterances"])
+                        examples.extend(itemL["sampleUtterances"])
+                        temp={"name":item['name'],"examples":examples,"response":itemDS["response"],"lexemas":itemDS["phrases"]}
+                        print("temp>> ",temp)
+                        jsonUnificado["intent"].append(temp)
+                        examples=[]
     response={"snips":SnipsData,"DS":dataBotDS['ResponseData'],"lex":dataBotLex['resource']}
     return {
         "statusCode": 200,
-        "body":response
+        "body":jsonUnificado
     }
 
 def lex(payload):
