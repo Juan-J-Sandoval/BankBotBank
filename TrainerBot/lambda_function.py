@@ -19,7 +19,7 @@ def lambda_handler(event, context):
     if operation == 'trainer':
         result = trainer(payload_dictionary)
     elif operation=='getData':
-        result = getData(payload_dictionary)
+        result = getData()
     # print("THE BUCKET NAME IS: " + bucket_name)
     # yaml_path = "/tmp/"+ event['bot'] + ".yaml"
     # json_path = "/tmp/"+ event['bot'] + ".json"
