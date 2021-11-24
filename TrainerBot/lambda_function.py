@@ -1,4 +1,4 @@
-import boto3, json, os, io, yaml, time
+import boto3, json, os, io, yaml, time, zipfile
 from yaml import Loader
 from snips_nlu import SnipsNLUEngine
 from snips_nlu.default_configs import CONFIG_ES
@@ -45,8 +45,29 @@ def files_download():
 def files_upload(Snips, ds, Lex):
     dsBytes=json.dumps(ds, indent=2).encode('utf-8')
     s3.meta.client.put_object(Bucket=bucket_name,Key=bot_data_file,Body=dsBytes)
+
     LexBytes=json.dumps(Lex, indent=2).encode('utf-8')
     s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+".json",Body=LexBytes)
+    with open("/tmp/"+bot_name+".json", 'wb') as fp:
+        json.dump(Lex, fp)
+
+    Snipsyaml=yaml.dump_all(Snips, explicit_start=True, default_flow_style=False)
+    SnipsBytes=Snipsyaml.encode("utf-8")
+    s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+'.yaml',Body=SnipsBytes)
+
+    try:
+        import zlib
+        compression = zipfile.ZIP_DEFLATED
+    except:
+        compression = zipfile.ZIP_STORED
+    zf = zipfile.ZipFile("/tmp/"+bot_name+'.zip', mode="w")
+    try:
+        zf.write("/tmp/"+bot_name+".json", compress_type=compression)
+    finally:
+        zf.close()
+        with open("/tmp/"+bot_name+'.zip', 'rb') as fp:
+            filebyte=fp.read()
+            s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+'.zip',Body=filebyte)
     print("Archivos almacenados... ")
     return True
 
