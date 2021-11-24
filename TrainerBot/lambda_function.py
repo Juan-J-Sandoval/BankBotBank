@@ -46,6 +46,26 @@ def lambda_handler(event, context):
     return result
 
 def trainer(payload):
+    #Snips
+    SnipsData=[]
+    s3.meta.client.download_file(bucket_name,bot_name+'.yaml',"/tmp/"+bot_name+'.yaml')
+    with open("/tmp/"+bot_name+'.yaml') as f:
+        for data in yaml.load_all(f, Loader=Loader):
+            SnipsData.append(data)
+    #DistanciaSemantica
+    s3.meta.client.download_file(bucket_name,bot_data_file,"/tmp/"+bot_data_file)
+    f = open("/tmp/"+bot_data_file, "r")
+    content = f.read()
+    dataBotDS = json.loads(content)
+    #Lex
+    s3.meta.client.download_file(bucket_name,bot_name+'.json',"/tmp/"+bot_name+'.json')
+    f = open("/tmp/"+bot_name+'.json', "r")
+    content = f.read()
+    dataBotLex = json.loads(content)
+    print("payload>> ",payload)
+    print("snips>> ",json.dumps(SnipsData))
+    print("DS>> ",json.dumps(dataBotDS))
+    print("lex>> ",json.dumps(dataBotLex))
     return {
         "statusCode": 200,
         "body":{"status": "reentrenado"}
@@ -85,7 +105,6 @@ def getData():
                         print("temp>> ",temp)
                         jsonUnificado["intent"].append(temp)
                         examples=[]
-    response={"snips":SnipsData,"DS":dataBotDS['ResponseData'],"lex":dataBotLex['resource']}
     return {
         "statusCode": 200,
         "body":jsonUnificado
