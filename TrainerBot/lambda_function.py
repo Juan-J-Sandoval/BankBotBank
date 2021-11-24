@@ -44,6 +44,7 @@ def files_download():
 
 def files_upload(Snips, ds, Lex):
     s3.meta.client.put_object(Bucket=bucket_name,Key=bot_data_file,Body=ds)
+    s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+".json",Body=Lex)
     print("Archivos almacenados... ")
     return True
 
@@ -93,6 +94,7 @@ def trainer(payload):
         Snipsintent["name"]=itemIntent["name"]
         Snipsintent["utterances"].extend(itemIntent["examples"])
         SnipsData.append(Snipsintent)
+    print("Archivos actualizados... ")
     files_upload(SnipsData, dataBotDS, dataBotLex)
     # engine_update(payload)
     return {
