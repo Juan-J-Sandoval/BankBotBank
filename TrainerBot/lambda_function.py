@@ -48,7 +48,7 @@ def files_upload(Snips, ds, Lex):
 
     LexBytes=json.dumps(Lex, indent=2).encode('utf-8')
     s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+".json",Body=LexBytes)
-    with open("/tmp/"+bot_name+".json", 'wb') as fp:
+    with open("/tmp/"+bot_name+".json", 'w') as fp:
         json.dump(Lex, fp)
 
     Snipsyaml=yaml.dump_all(Snips, explicit_start=True, default_flow_style=False)
