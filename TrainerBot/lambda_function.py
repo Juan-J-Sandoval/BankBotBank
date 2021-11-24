@@ -43,8 +43,10 @@ def files_download():
     return Snips, ds, Lex
 
 def files_upload(Snips, ds, Lex):
-    s3.meta.client.put_object(Bucket=bucket_name,Key=bot_data_file,Body=ds)
-    s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+".json",Body=Lex)
+    dsBytes=json.dumps(ds, indent=2).encode('utf-8')
+    s3.meta.client.put_object(Bucket=bucket_name,Key=bot_data_file,Body=dsBytes)
+    LexBytes=json.dumps(Lex, indent=2).encode('utf-8')
+    s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+".json",Body=LexBytes)
     print("Archivos almacenados... ")
     return True
 
