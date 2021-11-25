@@ -43,16 +43,16 @@ def files_download():
     return Snips, ds, Lex
 
 def files_upload(Snips, ds, Lex):
-    dsBytes=json.dumps(ds, indent=2).encode('utf-8')
+    dsBytes=json.dumps(ds, indent=2).encode('ascii')
     s3.meta.client.put_object(Bucket=bucket_name,Key=bot_data_file,Body=dsBytes)
 
-    LexBytes=json.dumps(Lex, indent=2).encode('utf-8')
+    LexBytes=json.dumps(Lex, indent=2).encode('ascii')
     s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+".json",Body=LexBytes)
     with open("/tmp/"+bot_name+".json", 'w') as fp:
         json.dump(Lex, fp)
 
     Snipsyaml=yaml.dump_all(Snips, explicit_start=True, default_flow_style=False)
-    SnipsBytes=Snipsyaml.encode("utf-8")
+    SnipsBytes=Snipsyaml.encode("ascii")
     s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+'.yaml',Body=SnipsBytes)
 
     try:
@@ -62,12 +62,12 @@ def files_upload(Snips, ds, Lex):
         compression = zipfile.ZIP_STORED
     zf = zipfile.ZipFile("/tmp/"+bot_name+'.zip', mode="w")
     try:
-        zf.write("/tmp/"+bot_name+".json", compress_type=compression)
+        zf.write(bot_name+".json", compress_type=compression)
     finally:
         zf.close()
-        with open("/tmp/"+bot_name+'.zip', 'rb') as fp:
-            filebyte=fp.read()
-            s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+'.zip',Body=filebyte)
+    with open("/tmp/"+bot_name+'.zip', 'rb') as fp:
+        filebyte=fp.read()
+        s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+'.zip',Body=filebyte)
     print("Archivos almacenados... ")
     return True
 
@@ -119,7 +119,7 @@ def trainer(payload):
         SnipsData.append(Snipsintent)
     print("Archivos actualizados... ")
     files_upload(SnipsData, dataBotDS, dataBotLex)
-    # engine_update(payload)
+    # engine_update()
     return {
         "statusCode": 200,
         "body":{"status": "entrenamiento completo"}
@@ -139,7 +139,6 @@ def getData():
                 for itemL in dataBotLex['resource']["intents"]:
                     if itemL['name']==item['name']:
                         examples.extend(item["utterances"])
-                        examples.extend(itemL["sampleUtterances"])
                         temp={"name":item['name'],"examples":examples,"response":itemDS["response"],"lexemas":itemDS["phrases"]}
                         print("temp>> ",temp)
                         jsonUnificado["intent"].append(temp)
@@ -149,33 +148,36 @@ def getData():
         "body":jsonUnificado
     }
 
-def engine_update(payload):
-    # print("THE BUCKET NAME IS: " + bucket_name)
-    # yaml_path = "/tmp/"+ event['bot'] + ".yaml"
-    # json_path = "/tmp/"+ event['bot'] + ".json"
+def engine_update():
 
-    # # se descarga el yaml de entrenamiento
-    # s3.meta.client.download_file(bucket_name, event['bot'] + ".yaml", yaml_path)
+    # ENTRENAMIENTO SNIPS
+    print("THE BUCKET NAME IS: " + bucket_name)
+    yaml_path = "/tmp/"+ bot_name + ".yaml"
+    json_path = "/tmp/"+ bot_name + ".json"
+
+    # se descarga el yaml de entrenamiento
+    s3.meta.client.download_file(bucket_name, bot_name + ".yaml", yaml_path)
     
-    # # Comando para ejecutar y transformar yaml a json
-    # comando = "snips-nlu generate-dataset es "+yaml_path+" > "+json_path
-    # os.system(comando)
+    # Comando para ejecutar y transformar yaml a json
+    comando = "snips-nlu generate-dataset es "+yaml_path+" > "+json_path
+    os.system(comando)
 
-    # print("reading model at {}".format(json_path))
-    # with io.open(json_path) as f:
-    #     trainingdata = json.load(f)
+    print("reading model at {}".format(json_path))
+    with io.open(json_path) as f:
+        trainingdata = json.load(f)
 
-    #     #creamos el engine de nlu con el cual vamos a entrenar el modelo
-    #     print("training model")
-    #     nlu_engine.fit(trainingdata)
+        #creamos el engine de nlu con el cual vamos a entrenar el modelo
+        print("training model")
+        nlu_engine.fit(trainingdata)
     
-    # #Placing the byte file in the S3 bucket
-    # trained_model = nlu_engine.to_byte_array()
-    # print("guardando modelo")
-    # s3.meta.client.put_object(Bucket=bucket_name,Key=event['bot'] + "_model.json",Body=trained_model)
-    print('>>> ',payload)
+    #Placing the byte file in the S3 bucket
+    trained_model = nlu_engine.to_byte_array()
+    print("guardando modelo")
+    s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name + "_model.json",Body=trained_model)
+
+    # ENTRENAMIENTO LEX
     #Extrae el zip del bucket 
-    s3Response = s3.get_object(Bucket=payload['bucket'],Key=payload['zip'])
+    s3Response = s3.get_object(Bucket=bucket_name,Key=bot_name+'.zip')
     dataB = s3Response['Body'].read()
     #Se importa el zip a lex. Esto no lo construira, solo verifica que el zip lleve los archivos correctos
     lexImport = lex.start_import(
@@ -202,5 +204,5 @@ def engine_update(payload):
         processBehavior='BUILD'
     )
     #Si se desea verificar que el bot está funcionando, se debe agregar un time sleep y volver a consultar con get_bot hasta que el estado sea READY
-    return {"NameBot":lexPutBot['name'], "Status":lexPutBot['status'], "Checksum":lexPutBot['checksum'], "Version":lexPutBot['version']}
+    return True
 
