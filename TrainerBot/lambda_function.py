@@ -6,6 +6,7 @@ from snips_nlu.default_configs import CONFIG_ES
 lex = boto3.client('lex-models')
 nlu_engine = SnipsNLUEngine(config=CONFIG_ES)
 s3 = boto3.resource('s3')
+s3Lex = boto3.client('s3')
 
 bucket_name = os.environ['BUCKET_NAME']
 bot_data_file = os.environ['BOT_DATA_FILE']
@@ -182,7 +183,7 @@ def engine_update():
 
     # ENTRENAMIENTO LEX
     #Extrae el zip del bucket 
-    s3Response = s3.get_object(Bucket=bucket_name,Key=bot_name+'.zip')
+    s3Response = s3Lex.get_object(Bucket=bucket_name,Key=bot_name+'.zip')
     dataB = s3Response['Body'].read()
     #Se importa el zip a lex. Esto no lo construira, solo verifica que el zip lleve los archivos correctos
     lexImport = lex.start_import(
