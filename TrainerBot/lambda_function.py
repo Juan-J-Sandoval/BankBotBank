@@ -43,12 +43,12 @@ def files_download():
     return Snips, ds, Lex
 
 def files_upload(Snips, ds, Lex):
-    dsBytes=json.dumps(ds, indent=2).encode('ascii')
+    dsBytes=json.dumps(ds, indent=2, ensure_ascii=False)
     s3.meta.client.put_object(Bucket=bucket_name,Key=bot_data_file,Body=dsBytes)
 
-    LexBytes=json.dumps(Lex, indent=2).encode('ascii')
+    LexBytes=json.dumps(Lex, indent=2, ensure_ascii=False)
     s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+".json",Body=LexBytes)
-    with open("/tmp/"+bot_name+".json", 'w') as fp:
+    with open(bot_name+".json", 'w') as fp:
         json.dump(Lex, fp)
 
     Snipsyaml=yaml.dump_all(Snips, explicit_start=True, default_flow_style=False)
