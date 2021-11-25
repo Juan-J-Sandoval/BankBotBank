@@ -11,6 +11,7 @@ bucket_name = os.environ['BUCKET_NAME']
 bot_data_file = os.environ['BOT_DATA_FILE']
 bot_name = os.environ['BOT_NAME']
 
+os.chdir('/tmp')
 
 def lambda_handler(event, context):
     payload_dictionary = json.loads(json.dumps(event['payload']))
@@ -25,25 +26,24 @@ def lambda_handler(event, context):
 def files_download():
     #Snips
     Snips=[]
-    s3.meta.client.download_file(bucket_name,bot_name+'.yaml',"/tmp/"+bot_name+'.yaml')
-    with open("/tmp/"+bot_name+'.yaml') as f:
+    s3.meta.client.download_file(bucket_name,bot_name+'.yaml',bot_name+'.yaml')
+    with open(bot_name+'.yaml') as f:
         for data in yaml.load_all(f, Loader=Loader):
             Snips.append(data)
     #DistanciaSemantica
-    s3.meta.client.download_file(bucket_name,bot_data_file,"/tmp/"+bot_data_file)
-    f = open("/tmp/"+bot_data_file, "r")
+    s3.meta.client.download_file(bucket_name,bot_data_file,bot_data_file)
+    f = open(bot_data_file, "r")
     content = f.read()
     ds = json.loads(content)
     #Lex
-    s3.meta.client.download_file(bucket_name,bot_name+'.json',"/tmp/"+bot_name+'.json')
-    f = open("/tmp/"+bot_name+'.json', "r")
+    s3.meta.client.download_file(bucket_name,bot_name+'.json',bot_name+'.json')
+    f = open(bot_name+'.json', "r")
     content = f.read()
     Lex = json.loads(content)
     print("Archivos descargados... /tmp/"+bot_name+".yaml /tmp/"+bot_data_file," /tmp/"+bot_name+".json")
     return Snips, ds, Lex
 
 def files_upload(Snips, ds, Lex):
-    os.chdir('/tmp')
     dsBytes=json.dumps(ds, indent=2, ensure_ascii=False)
     s3.meta.client.put_object(Bucket=bucket_name,Key=bot_data_file,Body=dsBytes)
 
@@ -153,18 +153,18 @@ def engine_update():
 
     # ENTRENAMIENTO SNIPS
     print("THE BUCKET NAME IS: " + bucket_name)
-    yaml_path = "/tmp/"+ bot_name + ".yaml"
-    json_path = "/tmp/"+ bot_name + ".json"
+    # yaml_path = "/tmp/"+ bot_name + ".yaml"
+    # json_path = "/tmp/"+ bot_name + ".json"
 
     # se descarga el yaml de entrenamiento
-    s3.meta.client.download_file(bucket_name, bot_name + ".yaml", yaml_path)
+    s3.meta.client.download_file(bucket_name, bot_name + ".yaml", bot_name + ".yaml")
     
     # Comando para ejecutar y transformar yaml a json
-    comando = "snips-nlu generate-dataset es "+yaml_path+" > "+json_path
+    comando = "snips-nlu generate-dataset es "+bot_name + ".yaml"+" > "+bot_name + ".json"
     os.system(comando)
 
-    print("reading model at {}".format(json_path))
-    with io.open(json_path) as f:
+    print("reading model at {}".format(bot_name + ".json"))
+    with io.open(bot_name + ".json") as f:
         trainingdata = json.load(f)
 
         #creamos el engine de nlu con el cual vamos a entrenar el modelo
