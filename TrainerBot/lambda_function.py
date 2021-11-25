@@ -119,11 +119,15 @@ def trainer(payload):
         Snipsintent["utterances"].extend(itemIntent["examples"])
         SnipsData.append(Snipsintent)
     print("Archivos actualizados... ")
-    files_upload(SnipsData, dataBotDS, dataBotLex)
-    # engine_update()
+    if files_upload(SnipsData, dataBotDS, dataBotLex):
+        status=engine_update()
+    if status:
+        response={"status": "entrenamiento completo"}
+    else:
+        response={"status": "entrenamiento fallido"}
     return {
         "statusCode": 200,
-        "body":{"status": "entrenamiento completo"}
+        "body":response
     }
 
 def getData():
@@ -204,6 +208,7 @@ def engine_update():
         intents= lexBot['intents'],
         processBehavior='BUILD'
     )
+    print(json.dumps(lexPutBot))
     #Si se desea verificar que el bot está funcionando, se debe agregar un time sleep y volver a consultar con get_bot hasta que el estado sea READY
     return True
 
