@@ -43,6 +43,7 @@ def files_download():
     return Snips, ds, Lex
 
 def files_upload(Snips, ds, Lex):
+    os.chdir('/tmp')
     dsBytes=json.dumps(ds, indent=2, ensure_ascii=False)
     s3.meta.client.put_object(Bucket=bucket_name,Key=bot_data_file,Body=dsBytes)
 
@@ -60,12 +61,12 @@ def files_upload(Snips, ds, Lex):
         compression = zipfile.ZIP_DEFLATED
     except:
         compression = zipfile.ZIP_STORED
-    zf = zipfile.ZipFile("/tmp/"+bot_name+'.zip', mode="w")
+    zf = zipfile.ZipFile(bot_name+'.zip', mode="w")
     try:
         zf.write(bot_name+".json", compress_type=compression)
     finally:
         zf.close()
-    with open("/tmp/"+bot_name+'.zip', 'rb') as fp:
+    with open(bot_name+'.zip', 'rb') as fp:
         filebyte=fp.read()
         s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+'.zip',Body=filebyte)
     print("Archivos almacenados... ")
