@@ -207,7 +207,7 @@ def engine_update():
         intents= lexBot['intents'],
         processBehavior='BUILD'
     )
-    print(json.dumps(lexPutBot))
+    print(lexPutBot)
     #Si se desea verificar que el bot está funcionando, se debe agregar un time sleep y volver a consultar con get_bot hasta que el estado sea READY
     return True
 
