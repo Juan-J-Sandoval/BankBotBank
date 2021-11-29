@@ -108,7 +108,7 @@ def trainer(payload):
         }
         Lexintent["name"]=itemIntent["name"]
         Lexintent["sampleUtterances"].extend(itemIntent["examples"])
-        Lexintent["content"]=itemIntent["response"]
+        Lexintent["conclusionStatement"]["messages"][0]["content"]=itemIntent["response"]
         dataBotLex["resource"]["intents"].append(Lexintent)
 
         DSintent["name"]=itemIntent["name"]
@@ -158,8 +158,6 @@ def engine_update():
 
     # ENTRENAMIENTO SNIPS
     print("THE BUCKET NAME IS: " + bucket_name)
-    # yaml_path = "/tmp/"+ bot_name + ".yaml"
-    # json_path = "/tmp/"+ bot_name + ".json"
 
     # se descarga el yaml de entrenamiento
     s3.meta.client.download_file(bucket_name, bot_name + ".yaml", bot_name + ".yaml")
