@@ -67,7 +67,7 @@ def files_upload(Snips, ds, Lex):
         zf.write(bot_name+".json", compress_type=compression)
     finally:
         zf.close()
-    with open(bot_name+'.zip', 'r') as fp:
+    with open(bot_name+'.zip', 'rb') as fp:
         filebyte=fp.read()
         s3.meta.client.put_object(Bucket=bucket_name,Key=bot_name+'.zip',Body=filebyte)
     print("Archivos almacenados... ")
