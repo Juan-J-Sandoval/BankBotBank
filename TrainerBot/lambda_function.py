@@ -209,13 +209,15 @@ def engine_update():
         processBehavior='BUILD'
     )
     print('lexPutBot ',lexPutBot)
-    lexPutAlias = lex.put_bot_alias(
-        name=lexPutBot['name'],
+    lexGetBotAlias = lex.get_bot_alias(name=lexPutBot['name'].lower(),botName=lexPutBot['name'])
+    print('lexGetBotAlias ',lexGetBotAlias)
+    lexPutBotAlias = lex.put_bot_alias(
+        name=lexGetBotAlias['name'],
         botVersion='$LATEST',
-        botName=lexPutBot['name'],
-        checksum=lexBot['checksum']
+        botName=lexGetBotAlias['botName'],
+        checksum=lexGetBotAlias['checksum']
     )
-    print('lexPutAlias ',lexPutAlias)
+    print('lexPutBotAlias ',lexPutBotAlias)
     #Si se desea verificar que el bot está funcionando, se debe agregar un time sleep y volver a consultar con get_bot hasta que el estado sea READY
     return True
 
