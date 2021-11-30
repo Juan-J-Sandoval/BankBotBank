@@ -197,6 +197,7 @@ def engine_update():
     #Se extraen las versiones del bot previamente importado, para despues extraer los datos de la version $LATEST junto con su Checksum
     lexBotVersion= lex.get_bot_versions(name=lexImport['name'])
     lexBot = lex.get_bot(name=lexBotVersion['bots'][0]['name'], versionOrAlias=lexBotVersion['bots'][0]['version'])
+    print('lexBot ', lexBot)
     #Se reenvían los datos pero ahora se especifica el 'processBehavior' en BUILD para que el estado final del bot sea BUILDING
     lexPutBot= lex.put_bot(
         name=lexBot['name'],
@@ -207,7 +208,14 @@ def engine_update():
         intents= lexBot['intents'],
         processBehavior='BUILD'
     )
-    print(lexPutBot)
+    print('lexPutBot ',lexPutBot)
+    lexPutAlias = lex.put_bot_alias(
+        name=lexPutBot['name'],
+        botVersion='$LATEST',
+        botName=lexPutBot['name'],
+        checksum=lexPutBot['checksum']
+    )
+    print('lexPutAlias ',lexPutAlias)
     #Si se desea verificar que el bot está funcionando, se debe agregar un time sleep y volver a consultar con get_bot hasta que el estado sea READY
     return True
 
