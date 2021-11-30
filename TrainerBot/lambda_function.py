@@ -213,7 +213,7 @@ def engine_update():
         name=lexPutBot['name'],
         botVersion='$LATEST',
         botName=lexPutBot['name'],
-        checksum=lexPutBot['checksum']
+        checksum=lexBot['checksum']
     )
     print('lexPutAlias ',lexPutAlias)
     #Si se desea verificar que el bot está funcionando, se debe agregar un time sleep y volver a consultar con get_bot hasta que el estado sea READY

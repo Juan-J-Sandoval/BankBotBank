@@ -581,8 +581,8 @@ Resources:
     Properties:
       FunctionName: !Sub TrainerBot-${Vers}-${Env}
       PackageType: Image
-      MemorySize: 824
-      Timeout: 90
+      MemorySize: 10240
+      Timeout: 120
       Environment:
         Variables:
           BUCKET_NAME: !Ref S3General
