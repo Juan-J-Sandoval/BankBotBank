@@ -79,7 +79,7 @@ def trainer(payload):
     print("snips>> ",json.dumps(SnipsData))
     print("DS>> ",json.dumps(dataBotDS))
     print("lex>> ",json.dumps(dataBotLex))
-    #Se actualizan datos
+    # Se actualizan datos de intenciones
     dataBotLex["resource"]["intents"].clear()
     dataBotDS["ResponseData"].clear()
     SnipsData.clear()
@@ -119,6 +119,38 @@ def trainer(payload):
         Snipsintent["name"]=itemIntent["name"]
         Snipsintent["utterances"].extend(itemIntent["examples"])
         SnipsData.append(Snipsintent)
+    # Se actualizan datos de entidades
+    dataBotLex["resource"]["slotTypes"].clear()
+    for itemEntitys in payload["entity"]:
+        Lexentity={
+            "name": "",
+            "version": "1",
+            "enumerationValues": [
+                {
+                    "value": "",
+                    "synonyms": []
+                }
+            ],
+            "valueSelectionStrategy": "TOP_RESOLUTION"
+        }
+        Snipsentity={
+            "type": "entity",
+            "name": "",
+            "automatically_extensible": False,
+            "values": []
+        }
+
+        Snipsentity['name']=itemEntitys['name']
+        Snipsentity['values']=itemEntitys['values']
+        SnipsData.append(Snipsentity)
+
+        Lexentity['name']=itemEntitys['name']
+        Lexentity['enumerationValues']['value']=itemEntitys['values'][0]
+        itemEntitys['values'].pop(0)
+        if len(itemEntitys['values']) > 0:
+            Lexentity['enumerationValues']['synonyms']=itemEntitys['values']
+        dataBotLex["resource"]["slotTypes"].append(Lexentity)
+    
     print("Archivos actualizados... ")
     if files_upload(SnipsData, dataBotDS, dataBotLex):
         status=engine_update()
@@ -155,25 +187,19 @@ def getData():
     }
 
 def engine_update():
-
     # ENTRENAMIENTO SNIPS
     print("THE BUCKET NAME IS: " + bucket_name)
-
     # se descarga el yaml de entrenamiento
     s3.meta.client.download_file(bucket_name, bot_name + ".yaml", bot_name + ".yaml")
-    
     # Comando para ejecutar y transformar yaml a json
     comando = "snips-nlu generate-dataset es "+bot_name + ".yaml"+" > "+bot_name + ".json"
     os.system(comando)
-
     print("reading model at {}".format(bot_name + ".json"))
     with io.open(bot_name + ".json") as f:
         trainingdata = json.load(f)
-
         #creamos el engine de nlu con el cual vamos a entrenar el modelo
         print("training model")
         nlu_engine.fit(trainingdata)
-    
     #Placing the byte file in the S3 bucket
     trained_model = nlu_engine.to_byte_array()
     print("guardando modelo")
