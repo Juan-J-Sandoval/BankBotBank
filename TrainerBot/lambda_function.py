@@ -148,7 +148,7 @@ def trainer(payload):
         Lexentity['enumerationValues'][0]['value']=itemEntitys['values'][0]
         itemEntitys['values'].pop(0)
         if len(itemEntitys['values']) > 0:
-            Lexentity['enumerationValues']['synonyms']=itemEntitys['values']
+            Lexentity['enumerationValues'][0]['synonyms']=itemEntitys['values']
         dataBotLex["resource"]["slotTypes"].append(Lexentity)
     
     print("Archivos actualizados... ")
