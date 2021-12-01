@@ -145,7 +145,7 @@ def trainer(payload):
         SnipsData.append(Snipsentity)
 
         Lexentity['name']=itemEntitys['name']
-        Lexentity['enumerationValues']['value']=itemEntitys['values'][0]
+        Lexentity['enumerationValues'][0]['value']=itemEntitys['values'][0]
         itemEntitys['values'].pop(0)
         if len(itemEntitys['values']) > 0:
             Lexentity['enumerationValues']['synonyms']=itemEntitys['values']
