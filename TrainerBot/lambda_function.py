@@ -141,14 +141,14 @@ def trainer(payload):
         }
 
         Snipsentity['name']=itemEntitys['name']
-        Snipsentity['values']=itemEntitys['values']
+        Snipsentity['values'].extend(itemEntitys['values'])
         SnipsData.append(Snipsentity)
 
         Lexentity['name']=itemEntitys['name']
         Lexentity['enumerationValues'][0]['value']=itemEntitys['values'][0]
         itemEntitys['values'].pop(0)
         if len(itemEntitys['values']) > 0:
-            Lexentity['enumerationValues'][0]['synonyms']=itemEntitys['values']
+            Lexentity['enumerationValues'][0]['synonyms'].extend(itemEntitys['values'])
         dataBotLex["resource"]["slotTypes"].append(Lexentity)
     
     print("Archivos actualizados... ")
