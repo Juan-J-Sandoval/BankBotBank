@@ -183,7 +183,6 @@ def getData():
                             jsonUnificado["intent"].append(temp)
                             examples=[]
         else:
-            print('tipo ',item['type'])
             temp={'name':item['name'],'values':item['values']}
             print("temp>> ",temp)
             jsonUnificado["entity"].append(temp)
