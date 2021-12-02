@@ -172,15 +172,21 @@ def getData():
     print("DS>> ",dataBotDS['ResponseData'])
     print("lex>> ",dataBotLex['resource']["intents"])
     for item in SnipsData:
-        for itemDS in dataBotDS['ResponseData']:
-            if itemDS['name']==item['name']:
-                for itemL in dataBotLex['resource']["intents"]:
-                    if itemL['name']==item['name']:
-                        examples.extend(item["utterances"])
-                        temp={"name":item['name'],"examples":examples,"response":itemDS["response"],"lexemas":itemDS["phrases"]}
-                        print("temp>> ",temp)
-                        jsonUnificado["intent"].append(temp)
-                        examples=[]
+        if item['type']=='intent':
+            for itemDS in dataBotDS['ResponseData']:
+                if itemDS['name']==item['name']:
+                    for itemL in dataBotLex['resource']["intents"]:
+                        if itemL['name']==item['name']:
+                            examples.extend(item["utterances"])
+                            temp={"name":item['name'],"examples":examples,"response":itemDS["response"],"lexemas":itemDS["phrases"]}
+                            print("temp>> ",temp)
+                            jsonUnificado["intent"].append(temp)
+                            examples=[]
+        else:
+            print('tipo ',item['type'])
+            temp={'name':item['name'],'values':item['values']}
+            print("temp>> ",temp)
+            jsonUnificado["entity"].append(temp)
     return {
         "statusCode": 200,
         "body":jsonUnificado
