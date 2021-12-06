@@ -1,4 +1,4 @@
-import boto3, json, os, io, yaml, time, zipfile
+import boto3, json, os, io, yaml, time, zipfile, re
 from yaml import Loader
 from snips_nlu import SnipsNLUEngine
 from snips_nlu.default_configs import CONFIG_ES
@@ -92,9 +92,27 @@ def trainer(payload):
             "slots": [],
             "conclusionStatement": {
                 "messages": [{
-                        "groupNumber": 1,
-                        "contentType": "PlainText",
-                        "content": ""}]}
+                    "groupNumber": 1,
+                    "contentType": "PlainText",
+                    "content": ""}]}
+        }
+        LexSlots={
+            "sampleUtterances": [],
+            "slotType": "", # nombre de la entidad
+            "slotTypeVersion": "1",
+            "obfuscationSetting": "NONE",
+            "slotConstraint": "Required",
+            "valueElicitationPrompt": {
+                "messages": [
+                    {
+                    "contentType": "PlainText",
+                    "content": "" # respuesta de la intencion
+                    }
+                ],
+                "maxAttempts": 2
+            },
+            "priority": 0, # numero de la entidad
+            "name": "" # nombre de la entidad
         }
         DSintent={
             "name": "",
@@ -106,9 +124,28 @@ def trainer(payload):
             "name": "despedida",
             "utterances": []
         }
+        SnipsSlots={'slots': []}
         Lexintent["name"]=itemIntent["name"]
-        Lexintent["sampleUtterances"].extend(itemIntent["examples"])
+        listExample=[]
+        for itemExamples in itemIntent["examples"]:
+            example = re.sub(r"\(([\w]+\s[\w]+)+\)|(\()[a-zA-Z]+\)", "", itemExamples, 0, re.MULTILINE)
+            example = re.sub(r"\[", "{", example, 0, re.MULTILINE)
+            example = re.sub(r"\]", "}", example, 0, re.MULTILINE)
+            listExample.append(example)
+        Lexintent["sampleUtterances"].extend(listExample)
         Lexintent["conclusionStatement"]["messages"][0]["content"]=itemIntent["response"]
+        if len(itemIntent["slots"]) > 0:
+            priority=1
+            for slot in itemIntent["slots"]:
+                # Proceso para entidades de LEX
+                LexSlots["slotType"]=slot
+                LexSlots["valueElicitationPrompt"]["messages"][0]["content"]=itemIntent["response"]
+                LexSlots["priority"]=priority
+                LexSlots["name"]=slot
+
+                Lexintent["slots"].append(LexSlots)
+                # Proceso para entidades de SNIPS
+                SnipsSlots["slots"].append({"name":slot, "entity": slot})
         dataBotLex["resource"]["intents"].append(Lexintent)
 
         DSintent["name"]=itemIntent["name"]
@@ -118,6 +155,8 @@ def trainer(payload):
 
         Snipsintent["name"]=itemIntent["name"]
         Snipsintent["utterances"].extend(itemIntent["examples"])
+        if len(SnipsSlots['slots']):
+            Snipsintent.update(SnipsSlots)
         SnipsData.append(Snipsintent)
     # Se actualizan datos de entidades
     dataBotLex["resource"]["slotTypes"].clear()
@@ -150,7 +189,7 @@ def trainer(payload):
         if len(itemEntitys['values']) > 0:
             Lexentity['enumerationValues'][0]['synonyms'].extend(itemEntitys['values'])
         dataBotLex["resource"]["slotTypes"].append(Lexentity)
-    
+
     print("Archivos actualizados... ")
     if files_upload(SnipsData, dataBotDS, dataBotLex):
         status=engine_update()
