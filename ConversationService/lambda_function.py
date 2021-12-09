@@ -1,9 +1,7 @@
 import os
 import json
 import boto3
-import hashlib 
-import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 rds_data = boto3.client('rds-data')
 

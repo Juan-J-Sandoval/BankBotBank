@@ -495,6 +495,9 @@ Resources:
       Environment:
         Variables:
           ConversationService: !Ref ConversationService
+          cluster_arn_aurora: !Ref ClusterArn
+          secret_arn_aurora: !Ref SecretManage
+          name_db: !Ref DBTableName
   #Motores de PLN
   GoogleSearchLambda:
     Type: AWS::Serverless::Function
