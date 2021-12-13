@@ -27,6 +27,8 @@ def lambda_handler(event, context):
             query=QueryAsignacion(event['requestContext']['connectionId'])
             print('segundo query',query)
             if 'idSocket' in query:
+                # Instancia QueryHistoric(idSocket) para extraer historico de conversación
+                QueryHistoric(event['requestContext']['connectionId'])
                 mensaje.update({'message': "tu usuario es: "+event['requestContext']['connectionId']})
                 api_gateway = boto3.client('apigatewaymanagementapi',endpoint_url = os.environ['socketAgente'])
                 api_gateway.post_to_connection(
@@ -118,6 +120,22 @@ def QueryAsignacion(idSocket):
         if responseC['ResponseMetadata']['HTTPStatusCode'] == 200 and responseU['ResponseMetadata']['HTTPStatusCode'] == 200:
             return {'idSocket': rows[0]['sessionId']}
     return {}
+
+def QueryHistoric(idSocket):
+    sql = """ 
+        SELECT * from Historic WHERE sessionId = :sessionId
+    """
+    sessionId= {'name':'sessionId', 'value':{'stringValue':idSocket}}
+    response = rds_data.execute_statement(
+        includeResultMetadata = True,
+        resourceArn = cluster_arn, 
+        secretArn = secret_arn, 
+        database = os.environ['name_db'], 
+        sql = sql,
+        parameters = [sessionId])
+    rows = []
+    rows = responseQuery(response)
+    print(rows)
 
 def responseQuery(payload_item):
     rows = []
