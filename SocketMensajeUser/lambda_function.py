@@ -28,8 +28,8 @@ def lambda_handler(event, context):
             print('segundo query',query)
             if 'idSocket' in query:
                 # Instancia QueryHistoric(idSocket) para extraer historico de conversación
-                QueryHistoric(event['requestContext']['connectionId'])
-                mensaje.update({'message': "tu usuario es: "+event['requestContext']['connectionId']})
+                msgsHistoric=QueryHistoric(event['requestContext']['connectionId'])
+                mensaje.update({'message': msgsHistoric})
                 api_gateway = boto3.client('apigatewaymanagementapi',endpoint_url = os.environ['socketAgente'])
                 api_gateway.post_to_connection(
                     Data=json.dumps(mensaje, indent=2).encode('utf-8'),
@@ -135,7 +135,13 @@ def QueryHistoric(idSocket):
         parameters = [sessionId])
     rows = []
     rows = responseQuery(response)
-    print(rows)
+    response=[]
+    if len(rows)>0:
+        for fila in rows:
+            response.append({'message':fila['mensaje'], 'type':fila['tipo']})
+    else:
+        response='Sin historial de mensajes'
+    return response
 
 def responseQuery(payload_item):
     rows = []
