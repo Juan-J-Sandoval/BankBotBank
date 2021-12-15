@@ -28,9 +28,7 @@ def lambda_handler(event, context):
             "payload": {
                 "Item": {
                     "sessionId" : event["sessionID"],
-                    "lastState": "cm",
-                    "userMessage": event["mensaje"],
-                    "botMessage": ""
+                    "lastState": "cm"
                 }
             }
         }
@@ -45,11 +43,3 @@ def lambda_handler(event, context):
         retonar = {"mensaje":event["mensaje"], "estado":"mensajex","n_pregunta":0,"sessionID":event["sessionID"]}
     print("resultado ",retonar)
     return retonar
-    
-def handle_decimal_type(obj):
-  if isinstance(obj, Decimal):
-      if float(obj).is_integer():
-         return int(obj)
-      else:
-         return float(obj)
-  raise TypeError

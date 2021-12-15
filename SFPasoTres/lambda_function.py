@@ -13,11 +13,9 @@ def lambda_handler(event, context):
       "payload": {
             "Item": {
                "sessionId": event["sessionID"],
-               "userMessage": event["mensaje"],
                "lastState": event["estado"],
                "intent": event["intent"],
-               "lastQuestion": event["n_pregunta"],
-               "botMessage": event["respuesta"]
+               "lastQuestion": event["n_pregunta"]
             }
       }
    }

@@ -30,20 +30,18 @@ def lambda_handler(event, context):
 def createItem(item, diccionary):
     now = datetime.now()
     sql = """
-    INSERT INTO Conversations( sessionId, userMessage, lastState, intent, lastQuestion, botMessage, startConversation, endConversation, updated, created)
-    VALUES(:sessionId, :userMessage, :lastState, :intent, :lastQuestion, :botMessage, :startConversation, :endConversation, :updated, :created)
+    INSERT INTO Conversations( sessionId, lastState, intent, lastQuestion, startConversation, endConversation, updated, created)
+    VALUES(:sessionId, :lastState, :intent, :lastQuestion, :startConversation, :endConversation, :updated, :created)
     """
     sessionId = {'name': 'sessionId', 'value': {'stringValue': item['sessionId']}}
-    userMessage = {'name': 'userMessage', 'value': {'stringValue': item['userMessage']}}
     lastState = {'name': 'lastState', 'value': {'stringValue': item['lastState']}}
     intent = {'name': 'intent', 'value': {'stringValue': 'init'}}
     lastQuestion={'name': 'lastQuestion', 'value':{'longValue': 0}}
-    botMessage = {'name': 'botMessage', 'value': {'stringValue': item['botMessage']}}
     startConversation = {'name':'startConversation', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
     endConversation = {'name':'endConversation', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
     updated = {'name':'updated', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
     created = {'name':'created', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
-    parameters = [sessionId, userMessage, lastState, intent, lastQuestion, botMessage, startConversation, endConversation, updated, created]
+    parameters = [sessionId, lastState, intent, lastQuestion, startConversation, endConversation, updated, created]
     response = rds_data.execute_statement(
         resourceArn = cluster_arn, 
         secretArn = secret_arn, 
@@ -133,19 +131,17 @@ def updateItem(item, diccionary):
             }
         else:
             sql = """
-            UPDATE Conversations set userMessage =:userMessage, lastState=:lastState, intent = :intent, 
-            lastQuestion = :lastQuestion, botMessage = :botMessage, endConversation = :endConversation,
+            UPDATE Conversations set lastState=:lastState, intent = :intent, 
+            lastQuestion = :lastQuestion, endConversation = :endConversation,
             updated = :updated WHERE sessionId = :sessionId
             """
             sessionId = {'name': 'sessionId', 'value': {'stringValue': item['sessionId']}}
-            userMessage = {'name': 'userMessage', 'value': {'stringValue': item['userMessage']}}
             lastState = {'name': 'lastState', 'value': {'stringValue': item['lastState']}}
             intent = {'name': 'intent', 'value': {'stringValue': item['intent']}}
             lastQuestion={'name': 'lastQuestion', 'value':{'longValue': item['lastQuestion']}}
-            botMessage = {'name': 'botMessage', 'value': {'stringValue': item['botMessage']}}
             endConversation = {'name':'endConversation', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
             updated = {'name':'updated', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
-            parameters = [sessionId, userMessage, lastState, intent, lastQuestion, botMessage, endConversation, updated]
+            parameters = [sessionId, lastState, intent, lastQuestion, endConversation, updated]
 
             response = rds_data.execute_statement(
             resourceArn = cluster_arn, 
