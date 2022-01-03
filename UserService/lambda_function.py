@@ -1,10 +1,8 @@
 import os
 import json
 import boto3
-import hashlib 
-import uuid
-from pprint import pprint
-from datetime import datetime, timezone
+import hashlib
+from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
@@ -388,7 +386,7 @@ def recoverPasswd(item, diccionary):
             msg['To'] = item['email']
             msg['Subject'] = "Nueva contraseña"
             msg.attach(MIMEText(message, 'plain'))
-            server = smtplib.SMTP('smtp.gmail.com: 587')
+            server = smtplib.SMTP(host='smtp.gmail.com', port=587)
             server.starttls()
             server.login(msg['From'], os.environ['pass_email'])
             server.sendmail(msg['From'], msg['To'], msg.as_string())
@@ -552,7 +550,7 @@ def responseQuery(payload_item):
             elif 'booleanValue' in item:
                 row[cols[i]] = item['booleanValue']
             else :
-                row[cols[i]] = null
+                row[cols[i]] = None
             i += 1
 
         rows.append(row)
