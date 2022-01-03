@@ -37,12 +37,12 @@ Parameters:
     Default: BankBotDSDev.json
     Type: String
     Description: Archivo con datos de distancia y respuestas de Snips
-  # Email:
-  #   Default: zafir@digitalconnect.com.mx
-  #   Type: String
-  #   Description: Correo que envia los email
-  # PassEmail:
-    Default: desarrolloDC
+  Email:
+    Default: digitalconnectzafir@gmail.com
+    Type: String
+    Description: Correo que envia los email
+  PassEmail:
+    Default: developerDG
     Type: String
     Description: Password del correo
 
@@ -636,6 +636,8 @@ Resources:
           cluster_arn_aurora: !Ref ClusterArn
           secret_arn_aurora: !Ref SecretManage
           name_db: !Ref DBTableName
+          email_host: !Ref Email
+          pass_email: !Ref PassEmail
   PermisosUserService:
     Type: AWS::Lambda::Permission
     DependsOn:

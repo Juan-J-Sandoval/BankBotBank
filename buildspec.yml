@@ -13,8 +13,8 @@ env:
     s3Pipeline: "pipeline-bankbot"
     ecrLambda: 959525568826.dkr.ecr.us-west-2.amazonaws.com/trainerbotbankdev
     BotDataFile: BankBotDSDev.json
-    # Email: zafir@digitalconnect.com.mx
-    # PassEmail: desarrolloDC
+    Email: digitalconnectzafir@gmail.com
+    PassEmail: developerDG
 
 
 phases:
