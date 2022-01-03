@@ -1,7 +1,7 @@
 import os
 import json
 import boto3
-import hashlib
+import hashlib 
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -380,8 +380,8 @@ def recoverPasswd(item, diccionary):
             database = os.environ['name_db'], 
             sql = sql,
             parameters = parameters)
-    
-        if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+            
+        if response['numberOfRecordsUpdated'] == 1:
             msg['From'] = os.environ['email_host']
             msg['To'] = item['email']
             msg['Subject'] = "Nueva contraseña"
