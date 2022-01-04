@@ -54,6 +54,7 @@ phases:
         --region ${AWS_DEFAULT_REGION}
         --parameter-overrides Env=${Env} Vers=${Vers} SecretManage=${SecretManage} ClusterArn=${ClusterArn}
         DBTableName=${DBTableName} BotName=${BotName} BotAlias=${BotAlias} BotDataFile=${BotDataFile}
+        Email=${Email} PassEmail=${PassEmail}
         --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
         --kms-key-id ${CODEBUILD_KMS_KEY_ID}
         --image-repository ${ecrLambda}

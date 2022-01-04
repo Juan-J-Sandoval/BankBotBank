@@ -5,8 +5,10 @@ import hashlib
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import smtplib
 from random import choice
+import base64
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
 
 rds_data = boto3.client('rds-data')
 
@@ -382,15 +384,18 @@ def recoverPasswd(item, diccionary):
             parameters = parameters)
             
         if response['numberOfRecordsUpdated'] == 1:
-            msg['From'] = os.environ['email_host']
-            msg['To'] = item['email']
-            msg['Subject'] = "Nueva contraseña"
-            msg.attach(MIMEText(message, 'plain'))
-            server = smtplib.SMTP(host='smtp.gmail.com', port=587)
-            server.starttls()
-            server.login(msg['From'], os.environ['pass_email'])
-            server.sendmail(msg['From'], msg['To'], msg.as_string())
-            server.quit()
+
+            SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
+            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+            service = build('gmail', 'v1', credentials=creds)
+            mimeMessage = MIMEMultipart()
+            mimeMessage["to"] = item['email']
+            mimeMessage["subject"] = "Nueva contraseña"
+            mimeMessage.attach(MIMEText(message, "plain"))
+            raw_string = base64.urlsafe_b64encode(mimeMessage.as_bytes()).decode()
+            message = service.users().messages().send(userId = "me", body = {"raw": raw_string}).execute()
+            print(message)
+
             result = {
                 'code': 200,
                 'message': "Registro actualizado correctamente"
