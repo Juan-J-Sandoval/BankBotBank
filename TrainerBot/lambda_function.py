@@ -217,7 +217,7 @@ def getData():
                     for itemL in dataBotLex['resource']["intents"]:
                         if itemL['name']==item['name']:
                             examples.extend(item["utterances"])
-                            temp={"name":item['name'],"examples":examples,"response":itemDS["response"],"lexemas":itemDS["phrases"]}
+                            temp={"name":item['name'],"examples":examples,"response":itemDS["response"],"lexemas":itemDS["phrases"],"slots":[]}
                             print("temp>> ",temp)
                             jsonUnificado["intent"].append(temp)
                             examples=[]
