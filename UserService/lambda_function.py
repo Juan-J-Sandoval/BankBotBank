@@ -361,7 +361,6 @@ def recoverPasswd(item, diccionary):
     else :
         p = ""
         p = p.join([choice(valores) for i in range(10)])
-        msg = MIMEMultipart()
         message = "Tu nueva contraseña es: "+p
         p= hashlib.md5(p.encode()).hexdigest()
         print(p)
@@ -394,7 +393,7 @@ def recoverPasswd(item, diccionary):
             mimeMessage.attach(MIMEText(message, "plain"))
             raw_string = base64.urlsafe_b64encode(mimeMessage.as_bytes()).decode()
             message = service.users().messages().send(userId = "me", body = {"raw": raw_string}).execute()
-            print(message)
+            print("api gmail > ",message)
 
             result = {
                 'code': 200,
