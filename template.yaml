@@ -239,7 +239,6 @@ Resources:
   SocketAgent:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Description: 'BankBot'
       Name: !Sub socket_agente-${Vers}-${Env}
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
