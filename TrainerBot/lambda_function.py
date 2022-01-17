@@ -218,6 +218,9 @@ def getData():
                         if itemL['name']==item['name']:
                             examples.extend(item["utterances"])
                             temp={"name":item['name'],"examples":examples,"response":itemDS["response"],"lexemas":itemDS["phrases"],"slots":[]}
+                            if item.get('slots'):
+                                for itemSlot in item['slots']:
+                                    temp["slots"].append(itemSlot["name"])
                             print("temp>> ",temp)
                             jsonUnificado["intent"].append(temp)
                             examples=[]
