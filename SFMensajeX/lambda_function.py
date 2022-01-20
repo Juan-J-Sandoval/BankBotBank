@@ -7,8 +7,8 @@ lambdaGoogle = os.environ['GoogleSearch']
 
 bucket_name = os.environ['BUCKET_NAME']
 bot_data_file = os.environ['BOT_DATA_FILE']
-s3 = boto3.client('s3')
-s3.download_file(bucket_name,bot_data_file,"/tmp/"+bot_data_file)
+s3 = boto3.resource('s3')
+s3.meta.client.download_file(bucket_name,bot_data_file,"/tmp/"+bot_data_file)
 f = open("/tmp/"+bot_data_file, "r")
 content = f.read()
 dataBot = json.loads(content)
