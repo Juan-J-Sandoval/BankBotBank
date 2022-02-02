@@ -24,12 +24,10 @@ def lambda_handler(event, context):
             input=str(sf_data))
         mensajeBot=json.loads(sf_respuesta['output'])
         if json.loads(sf_respuesta['output'])['intent'] == 'agentehabla':
-            query=QueryAsignacion(event['requestContext']['connectionId'])
-            print('segundo query',query)
+            # Se le notifica al agente que tiene un usuario en espera
+            query=QueryAgent()
             if 'idSocket' in query:
-                # Instancia QueryHistoric(idSocket) para extraer historico de conversación
-                msgsHistoric=QueryHistoric(event['requestContext']['connectionId'])
-                mensaje.update({'message': msgsHistoric})
+                mensaje.update({'message': 'Hay un nuevo usuario en espera', 'socketUser':event['requestContext']['connectionId']})
                 api_gateway = boto3.client('apigatewaymanagementapi',endpoint_url = os.environ['socketAgente'])
                 api_gateway.post_to_connection(
                     Data=json.dumps(mensaje, indent=2).encode('utf-8'),
@@ -42,10 +40,10 @@ def lambda_handler(event, context):
                     ConnectionId=event['requestContext']['connectionId']
                 )
             else:
-                mensaje.update({'message':'Por el momento no tenemos agentes disponibles'})
+                mensaje.update({'message':'No contamos con agentes disponibles, intenta mas tarde'})
                 api_gateway = boto3.client('apigatewaymanagementapi',endpoint_url = "https://" + event["requestContext"]["domainName"] + "/" + event["requestContext"]["stage"])
                 api_gateway.post_to_connection(
-                    Data=json.dumps(mensaje, indent=2).encode('utf-8'),
+                    Data=json.dumps(mensajeBot, indent=2).encode('utf-8'),
                     ConnectionId=event['requestContext']['connectionId']
                 )
         else:
@@ -78,70 +76,24 @@ def QueryConversation(idSocket):
             return {'idSocket': rows[0]['agent']}
     return {}
 
-def QueryAsignacion(idSocket):
+def QueryAgent():
     sql = """ 
-        SELECT * from Users WHERE sessionId != '' and lastState = 'baja'
+        SELECT * from Users where sessionId != ''
     """
     response = rds_data.execute_statement(
         includeResultMetadata = True,
         resourceArn = cluster_arn, 
         secretArn = secret_arn, 
         database = os.environ['name_db'], 
-        sql = sql)
+        sql = sql
+    )
     rows = []
     rows = responseQuery(response)
     print(rows)
     if len(rows) != 0:
-        sql = """ 
-            UPDATE Conversations SET agent = :agent WHERE sessionId = :sessionId
-        """
-        sessionId = {'name': 'sessionId', 'value': {'stringValue': idSocket}}
-        agent = {'name': 'agent', 'value': {'stringValue': rows[0]['sessionId']}}
-        responseC = rds_data.execute_statement(
-            includeResultMetadata = True,
-            resourceArn = cluster_arn, 
-            secretArn = secret_arn, 
-            database = os.environ['name_db'], 
-            sql = sql,
-            parameters = [sessionId,agent]
-        )
-        sql = """ 
-            UPDATE Users SET lastState = 'alta' WHERE email = :email
-        """
-        email = {'name': 'email', 'value': {'stringValue': rows[0]['email']}}
-        responseU = rds_data.execute_statement(
-            includeResultMetadata = True,
-            resourceArn = cluster_arn, 
-            secretArn = secret_arn, 
-            database = os.environ['name_db'], 
-            sql = sql,
-            parameters = [email]
-        )
-        if responseC['ResponseMetadata']['HTTPStatusCode'] == 200 and responseU['ResponseMetadata']['HTTPStatusCode'] == 200:
+        if rows[0]['sessionId'] != '':
             return {'idSocket': rows[0]['sessionId']}
     return {}
-
-def QueryHistoric(idSocket):
-    sql = """ 
-        SELECT * from Historic WHERE sessionId = :sessionId
-    """
-    sessionId= {'name':'sessionId', 'value':{'stringValue':idSocket}}
-    response = rds_data.execute_statement(
-        includeResultMetadata = True,
-        resourceArn = cluster_arn, 
-        secretArn = secret_arn, 
-        database = os.environ['name_db'], 
-        sql = sql,
-        parameters = [sessionId])
-    rows = []
-    rows = responseQuery(response)
-    response=[]
-    if len(rows)>0:
-        for fila in rows:
-            response.append({'message':fila['mensaje'], 'type':fila['tipo']})
-    else:
-        response='Sin historial de mensajes'
-    return response
 
 def responseQuery(payload_item):
     rows = []

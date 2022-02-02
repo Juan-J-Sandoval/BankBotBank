@@ -55,7 +55,7 @@ def responseQuery(payload_item):
             elif 'booleanValue' in item:
                 row[cols[i]] = item['booleanValue']
             else :
-                row[cols[i]] = null
+                row[cols[i]] = None
             i += 1
         rows.append(row)
     return rows
