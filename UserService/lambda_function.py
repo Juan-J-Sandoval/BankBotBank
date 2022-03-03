@@ -69,7 +69,7 @@ def createItem(item, diccionary):
         item['password'] = hashlib.md5(item['password'].encode()).hexdigest()
 
         sql = """ 
-            SELECT * from Users WHERE email = :email
+            SELECT * from Agents WHERE email = :email
             """
         email = {'name': 'email', 'value': {'stringValue': item['email']}}
             
@@ -90,7 +90,7 @@ def createItem(item, diccionary):
         else :
             now = datetime.now()
             sql = """
-            INSERT INTO Users( email, name, lastName, phone, password, rol, lastState, position, updated, created,
+            INSERT INTO Agents( email, name, lastName, phone, password, rol, lastState, position, updated, created,
             Dashboard, Chat, Reportes, Respuestas, MiCuenta, RecuperarPsswrd, Consultar, Nuevo, sessionId)
             VALUES(:email, :name, :lastname, :phone, :password, :rol, :lastState, :position, :updated, :created,
             :Dashboard, :Chat, :Reportes, :Respuestas, :MiCuenta, :RecuperarPsswrd, :Consultar, :Nuevo, :sessionId)
@@ -145,7 +145,7 @@ def getItem(item, diccionary):
         }
     else :
         sql = """ 
-            SELECT * from Users WHERE email = :email
+            SELECT * from Agents WHERE email = :email
             """
         email = {'name': 'email', 'value': {'stringValue': item['email']}}
             
@@ -184,7 +184,7 @@ def login(item, diccionary):
     else :
         item['password'] = hashlib.md5(item['password'].encode()).hexdigest()
         sql = """ 
-            SELECT * from Users WHERE email = :email and password = :password
+            SELECT * from Agents WHERE email = :email and password = :password
             """
         email = {'name': 'email', 'value': {'stringValue': item['email']}}
         password = {'name': 'password', 'value': {'stringValue': item['password']}}
@@ -221,7 +221,7 @@ def updateItem(item, diccionary):
         }
     else :
         sql = """ 
-            SELECT * from Users WHERE email = :email
+            SELECT * from Agents WHERE email = :email
             """
         email = {'name': 'email', 'value': {'stringValue': item['email']}}
             
@@ -246,7 +246,7 @@ def updateItem(item, diccionary):
         
             now = datetime.now()
             sql = """
-            UPDATE Users SET email = :email, name = :name, lastName = :lastname, 
+            UPDATE Agents SET email = :email, name = :name, lastName = :lastname, 
                 phone = :phone, password = :password, rol = :rol,
                 lastState = :lastState, position = :position, updated = :updated,
                 Dashboard = :Dashboard, Chat = :Chat, Reportes = :Reportes,
@@ -303,7 +303,7 @@ def deleteItem(item, diccionary):
         }
     else :
         sql = """ 
-            SELECT * from Users WHERE email = :email
+            SELECT * from Agents WHERE email = :email
             """
         email = {'name': 'email', 'value': {'stringValue': item['email']}}
             
@@ -325,7 +325,7 @@ def deleteItem(item, diccionary):
         else :
             
             sql = """ 
-            DELETE FROM Users WHERE email = :email
+            DELETE FROM Agents WHERE email = :email
             """
             email = {'name': 'email', 'value': {'stringValue': item['email']}}
                 
@@ -367,7 +367,7 @@ def recoverPasswd(item, diccionary):
         
         now = datetime.now()
         sql = """
-        UPDATE Users SET password = :password, updated = :updated
+        UPDATE Agents SET password = :password, updated = :updated
         WHERE email = :email
         """
         password = {'name': 'password', 'value': {'stringValue': p}}
@@ -408,7 +408,7 @@ def recoverPasswd(item, diccionary):
 
 def fullGet():
     sql = """ 
-        SELECT * from Users
+        SELECT * from Agents
         """
         
     response = rds_data.execute_statement(
@@ -443,7 +443,7 @@ def getUsersByRol(item, diccionary):
         }
     else :
         sql = """ 
-            SELECT * from Users WHERE rol = :rol 
+            SELECT * from Agents WHERE rol = :rol 
             """
         rol = {'name':'rol', 'value':{'stringValue': item['rol']}}
         response = rds_data.execute_statement(
@@ -475,7 +475,7 @@ def getByNameLast(item, diccionary):
         }
     else:
         sql = """ 
-            SELECT * from Users WHERE name = :name and lastName = :lastName
+            SELECT * from Agents WHERE name = :name and lastName = :lastName
             """
         name = {'name':'name', 'value':{'stringValue': item['name']}}
         lastName = {'name':'lastName', 'value':{'stringValue': item['lastName']}}
@@ -508,7 +508,7 @@ def getUsersByState(item, diccionary):
         }
     else :
         sql = """ 
-            SELECT * from Users WHERE lastState = :lastState 
+            SELECT * from Agents WHERE lastState = :lastState 
             """
         lastState = {'name':'lastState', 'value':{'stringValue': item['lastState']}}
         response = rds_data.execute_statement(
