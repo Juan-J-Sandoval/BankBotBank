@@ -20,7 +20,7 @@ secret_arn = os.environ['secret_arn_aurora']
 
 
 def lambda_handler(event, context):
-    
+    print(json.dumps(event))
     payload_dictionary = json.loads(json.dumps(event['payload']['Item']))
     
     operation = event['operation']
@@ -533,7 +533,6 @@ def getUsersByState(item, diccionary):
     return result
 
 def responseQuery(payload_item):
-    print(json.dumps(payload_item))
     rows = []
     cols = []
     for column in payload_item['columnMetadata']:
@@ -542,7 +541,6 @@ def responseQuery(payload_item):
         i = 0
         row = {}
         for item in record:
-            print (item, i)
             if 'stringValue' in item  :
                 row[cols[i]] = item['stringValue']
             elif 'blobValue' in item :
@@ -558,5 +556,5 @@ def responseQuery(payload_item):
             i += 1
 
         rows.append(row)
-        
+    print(rows)
     return rows
