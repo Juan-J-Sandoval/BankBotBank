@@ -8,7 +8,7 @@ secret_arn = os.environ['secret_arn_aurora']
 def lambda_handler(event, context):
     print(json.dumps(event))
     mensaje={'message':''}
-    query=QueryConversation(event['requestContext']['connectionId'])
+    query=QueryAgentsInUsers(event['requestContext']['connectionId'])
     print(query)
     if 'idSocket' in query:
         mensaje.update({'message':json.loads(event['body'])['message']})
@@ -19,20 +19,21 @@ def lambda_handler(event, context):
         )
     else:
         sf_data = "{\"sessionID\":\""+event['requestContext']['connectionId']+"\",\"mensaje\":\""+json.loads(event['body'])['message']+"\"}"
-        sf_respuesta = sf.start_sync_execution(
-            stateMachineArn=os.environ['STATE_MACHINE'],
-            input=str(sf_data))
+        sf_respuesta = sf.start_sync_execution(stateMachineArn=os.environ['STATE_MACHINE'], input=str(sf_data))
         mensajeBot=json.loads(sf_respuesta['output'])
         if json.loads(sf_respuesta['output'])['intent'] == 'agentehabla':
             # Se le notifica al agente que tiene un usuario en espera
-            query=QueryAgent()
-            if 'idSocket' in query:
-                mensaje.update({'message': 'Hay un nuevo usuario en espera', 'socketUser':event['requestContext']['connectionId']})
+            if User(event['requestContext']['connectionId']):
+                query=QueryAgent()
+                print(query)
+            if 'idSockets' in query:
+                mensaje.update({'message': 'Hay un nuevo usuario en espera', 'sessionUsers':query['sessionUsers']})
                 api_gateway = boto3.client('apigatewaymanagementapi',endpoint_url = os.environ['socketAgente'])
-                api_gateway.post_to_connection(
-                    Data=json.dumps(mensaje, indent=2).encode('utf-8'),
-                    ConnectionId=query['idSocket']
-                )
+                for item in query['idSockets']:
+                    api_gateway.post_to_connection(
+                        Data=json.dumps(mensaje, indent=2).encode('utf-8'),
+                        ConnectionId=item
+                    )
                 mensaje.update({'message':json.loads(sf_respuesta['output'])['message']})
                 api_gateway = boto3.client('apigatewaymanagementapi',endpoint_url = "https://" + event["requestContext"]["domainName"] + "/" + event["requestContext"]["stage"])
                 api_gateway.post_to_connection(
@@ -43,7 +44,7 @@ def lambda_handler(event, context):
                 mensaje.update({'message':'No contamos con agentes disponibles, intenta mas tarde'})
                 api_gateway = boto3.client('apigatewaymanagementapi',endpoint_url = "https://" + event["requestContext"]["domainName"] + "/" + event["requestContext"]["stage"])
                 api_gateway.post_to_connection(
-                    Data=json.dumps(mensajeBot, indent=2).encode('utf-8'),
+                    Data=json.dumps(mensaje, indent=2).encode('utf-8'),
                     ConnectionId=event['requestContext']['connectionId']
                 )
         else:
@@ -55,11 +56,31 @@ def lambda_handler(event, context):
             )
     return {}
 
-def QueryConversation(idSocket):
+def QueryAgentsInUsers(idSocket):
     sql = """ 
-        SELECT * from Conversations WHERE sessionId = :sessionId
+        SELECT * from Agents WHERE sessionUser = :sessionUser
     """
-    sessionId = {'name': 'sessionId', 'value': {'stringValue': idSocket}}
+    sessionUser = {'name': 'sessionUser', 'value': {'stringValue': idSocket}}
+    response = rds_data.execute_statement(
+        includeResultMetadata = True,
+        resourceArn = cluster_arn, 
+        secretArn = secret_arn, 
+        database = os.environ['name_db'], 
+        sql = sql,
+        parameters = [sessionUser]
+    )
+    rows = []
+    rows = responseQuery(response)
+    print(rows)
+    if len(rows) != 0:
+        return {'idSocket': rows[0]['sessionId']}
+    return {}
+
+def User(sessionId):
+    sql = """
+        UPDATE Users SET onHold = True WHERE sessionId = :sessionId
+    """
+    sessionId = {'name': 'sessionId', 'value': {'stringValue': sessionId}}
     response = rds_data.execute_statement(
         includeResultMetadata = True,
         resourceArn = cluster_arn, 
@@ -68,17 +89,12 @@ def QueryConversation(idSocket):
         sql = sql,
         parameters = [sessionId]
     )
-    rows = []
-    rows = responseQuery(response)
-    print(rows)
-    if len(rows) != 0:
-        if rows[0]['agent'] != None:
-            return {'idSocket': rows[0]['agent']}
-    return {}
+    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+        return True
 
 def QueryAgent():
     sql = """ 
-        SELECT * from Users where sessionId != ''
+        SELECT * from Agents where sessionId != ''
     """
     response = rds_data.execute_statement(
         includeResultMetadata = True,
@@ -91,8 +107,29 @@ def QueryAgent():
     rows = responseQuery(response)
     print(rows)
     if len(rows) != 0:
-        if rows[0]['sessionId'] != '':
-            return {'idSocket': rows[0]['sessionId']}
+        sockets=[]
+        for item in rows:
+            if item['sessionId'] != '':
+                sockets.append(item['sessionId'])
+        if len(sockets) != 0:
+            sql = """ 
+                SELECT * from Users where onHold = True
+            """
+            response = rds_data.execute_statement(
+                includeResultMetadata = True,
+                resourceArn = cluster_arn, 
+                secretArn = secret_arn, 
+                database = os.environ['name_db'], 
+                sql = sql
+            )
+            rows = []
+            rows = responseQuery(response)
+            print(rows)
+            if len(rows)!= 0:
+                sessionUsers=[]
+                for item in rows:
+                    sessionUsers.append(item['sessionId'])
+                return {'idSockets': sockets, 'sessionUsers':sessionUsers}
     return {}
 
 def responseQuery(payload_item):

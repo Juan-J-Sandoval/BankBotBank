@@ -202,6 +202,7 @@ Resources:
           cluster_arn_aurora: !Ref ClusterArn
           secret_arn_aurora: !Ref SecretManage
           name_db: !Ref DBTableName
+          socketAgente: !Join [ '', [ 'https://', !Ref SocketAgent, '.execute-api.', !Ref AWS::Region, '.amazonaws.com/', !Ref Env]]
   PermisosSocketDisconnectUser:
     Type: AWS::Lambda::Permission
     DependsOn:
@@ -632,28 +633,28 @@ Resources:
           cluster_arn_aurora: !Ref ClusterArn
           secret_arn_aurora: !Ref SecretManage
           name_db: !Ref DBTableName
-  UserService:
+  AgentService:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: python3.8
       Timeout: 29
       MemorySize: 128
       Handler: lambda_function.lambda_handler
-      FunctionName: !Sub UserService-${Vers}-${Env}
-      CodeUri: UserService
+      FunctionName: !Sub AgentService-${Vers}-${Env}
+      CodeUri: AgentService
       Role: !GetAtt RoleLogs.Arn
       Environment:
         Variables:
           cluster_arn_aurora: !Ref ClusterArn
           secret_arn_aurora: !Ref SecretManage
           name_db: !Ref DBTableName
-  PermisosUserService:
+  PermisosAgentService:
     Type: AWS::Lambda::Permission
     DependsOn:
       - PointAccess
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref UserService
+      FunctionName: !Ref AgentService
       Principal: apigateway.amazonaws.com
   ReportsService:
     Type: AWS::Serverless::Function
@@ -688,7 +689,7 @@ Resources:
         info:
           title: !Sub PointAccess-${Vers}-${Env}
         paths:
-          /user:
+          /agent:
             post:
               responses:
                 "200":
@@ -708,7 +709,7 @@ Resources:
                       schema:
                         $ref: "#/components/schemas/Empty"
               x-amazon-apigateway-integration:
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${UserService}/invocations
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AgentService}/invocations
                 httpMethod: "POST"
                 responses:
                   default:

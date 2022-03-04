@@ -6,10 +6,10 @@ secret_arn = os.environ['secret_arn_aurora']
 
 def lambda_handler(event, context):
     print(json.dumps(event))
-    if json.loads(event['body']).get('socketUser'):
-        query=QueryAsignacion(json.loads(event['body']).get('socketUser'), event['requestContext']['connectionId'])
+    if json.loads(event['body']).get('sessionUsers'):
+        query=QueryAsignacion(json.loads(event['body']).get('sessionUsers'), event['requestContext']['connectionId'])
         if 'NombreAgent' in query:
-            msgsHistoric=QueryHistoric(json.loads(event['body']).get('socketUser'))
+            msgsHistoric=QueryHistoric(json.loads(event['body']).get('sessionUsers'))
             mensaje={'message': msgsHistoric}
             api_gateway = boto3.client('apigatewaymanagementapi',endpoint_url = "https://" + event["requestContext"]["domainName"] + "/" + event["requestContext"]["stage"])
             api_gateway.post_to_connection(
@@ -21,11 +21,11 @@ def lambda_handler(event, context):
             api_gateway = boto3.client('apigatewaymanagementapi',endpoint_url = os.environ['socketUsuario'])
             api_gateway.post_to_connection(
                 Data=json.dumps(mensaje, indent=2).encode('utf-8'),
-                ConnectionId=json.loads(event['body']).get('socketUser')
+                ConnectionId=json.loads(event['body']).get('sessionUsers')
             )
     else:
         mensaje={'message':json.loads(event['body'])['message']}
-        query=QueryConversation(event['requestContext']['connectionId'])
+        query=QueryAgents(event['requestContext']['connectionId'])
         if 'idSocket' in query:
             api_gateway = boto3.client('apigatewaymanagementapi',endpoint_url = os.environ['socketUsuario'])
             print(mensaje,' ',type(mensaje))
@@ -43,9 +43,9 @@ def lambda_handler(event, context):
             )
     return {}
 
-def QueryConversation(idSocket):
+def QueryAgents(idSocket):
     sql = """ 
-        SELECT * from Conversations WHERE agent = :agent
+        SELECT * from Agents WHERE sessionId = :agent
     """
     agent = {'name': 'agent', 'value': {'stringValue': idSocket}}
     response = rds_data.execute_statement(
@@ -59,14 +59,15 @@ def QueryConversation(idSocket):
     rows = []
     rows = responseQuery(response)
     print(rows)
-    if len(rows) != 0:
-        return {'idSocket': rows[0]['sessionId']}
+    if len(rows) != 0 and rows[0]['sessionUser'] != '':
+        print("dddd")
+        return {'idSocket': rows[0]['sessionUser']}
     else:
         return {}
 
 def QueryAsignacion(socketUser,socketAgent):
     sql = """ 
-        SELECT * from Users WHERE sessionId = :sessionId
+        SELECT * from Agents WHERE sessionId = :sessionId
     """
     sessionId = {'name': 'sessionId', 'value': {'stringValue': socketAgent}}
     response = rds_data.execute_statement(
@@ -81,19 +82,32 @@ def QueryAsignacion(socketUser,socketAgent):
     print(rows)
     if len(rows) != 0:
         sql = """ 
-            UPDATE Conversations SET agent = :agent WHERE sessionId = :sessionId
+            UPDATE Users SET onHold=:onHold WHERE sessionId = :sessionId
         """
         sessionId = {'name': 'sessionId', 'value': {'stringValue': socketUser}}
-        agent = {'name': 'agent', 'value': {'stringValue': rows[0]['sessionId']}}
-        responseC = rds_data.execute_statement(
+        onHold = {'name':'onHold', 'value':{'booleanValue': False}}
+        responseU = rds_data.execute_statement(
             includeResultMetadata = True,
             resourceArn = cluster_arn, 
             secretArn = secret_arn, 
             database = os.environ['name_db'], 
             sql = sql,
-            parameters = [sessionId,agent]
+            parameters = [sessionId,onHold]
         )
-        if responseC['ResponseMetadata']['HTTPStatusCode'] == 200:
+        sql = """ 
+            UPDATE Agents SET sessionUser=:sessionUser WHERE sessionId = :sessionId
+        """
+        sessionId = {'name': 'sessionId', 'value': {'stringValue': socketAgent}}
+        sessionUser = {'name':'sessionUser', 'value':{'stringValue': socketUser}}
+        responseA = rds_data.execute_statement(
+            includeResultMetadata = True,
+            resourceArn = cluster_arn, 
+            secretArn = secret_arn, 
+            database = os.environ['name_db'], 
+            sql = sql,
+            parameters = [sessionId,sessionUser]
+        )
+        if responseU['ResponseMetadata']['HTTPStatusCode'] == 200 and responseA['ResponseMetadata']['HTTPStatusCode'] == 200:
             return {'NombreAgent': rows[0]['name']}
     return {}
 

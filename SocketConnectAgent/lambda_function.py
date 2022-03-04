@@ -6,19 +6,21 @@ secret_arn = os.environ['secret_arn_aurora']
 def lambda_handler(event, context):
     print(json.dumps(event))
     sql = """ 
-            SELECT * from Users WHERE sessionId = ''
+            SELECT * from Agents WHERE id = :idAgent
             """
+    idAgent = {'name': 'idAgent', 'value': {'stringValue': event['queryStringParameters']['idAgent']}}
     response = rds_data.execute_statement(
         includeResultMetadata = True,
         resourceArn = cluster_arn, 
         secretArn = secret_arn, 
-        database = os.environ['name_db'], 
+        database = os.environ['name_db'],
+        parameters=[idAgent],
         sql = sql)
     rows = []
     rows = responseQuery(response)
     if len(rows) != 0:
         sql = """ 
-            UPDATE Users SET sessionId = :sessionId, lastState = 'baja' WHERE email = :email
+            UPDATE Agents SET sessionId = :sessionId WHERE email = :email
         """
         sessionId = {'name': 'sessionId', 'value': {'stringValue': event['requestContext']['connectionId']}}
         email = {'name': 'email', 'value': {'stringValue': rows[0]['email']}}

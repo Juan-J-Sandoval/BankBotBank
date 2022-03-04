@@ -30,8 +30,8 @@ def lambda_handler(event, context):
 def createItem(item, diccionary):
     now = datetime.now()
     sql = """
-    INSERT INTO Conversations( sessionId, lastState, intent, lastQuestion, startConversation, endConversation, updated, created)
-    VALUES(:sessionId, :lastState, :intent, :lastQuestion, :startConversation, :endConversation, :updated, :created)
+    INSERT INTO Users( sessionId, lastState, intent, lastQuestion, startConversation, endConversation, onHold)
+    VALUES(:sessionId, :lastState, :intent, :lastQuestion, :startConversation, :endConversation, :onHold)
     """
     sessionId = {'name': 'sessionId', 'value': {'stringValue': item['sessionId']}}
     lastState = {'name': 'lastState', 'value': {'stringValue': item['lastState']}}
@@ -39,9 +39,8 @@ def createItem(item, diccionary):
     lastQuestion={'name': 'lastQuestion', 'value':{'longValue': 0}}
     startConversation = {'name':'startConversation', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
     endConversation = {'name':'endConversation', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
-    updated = {'name':'updated', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
-    created = {'name':'created', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
-    parameters = [sessionId, lastState, intent, lastQuestion, startConversation, endConversation, updated, created]
+    onHold = {'name':'onHold', 'value':{'booleanValue': False}}
+    parameters = [sessionId, lastState, intent, lastQuestion, startConversation, endConversation, onHold]
     response = rds_data.execute_statement(
         resourceArn = cluster_arn, 
         secretArn = secret_arn, 
@@ -70,7 +69,7 @@ def getItem(item, diccionary):
         }
     else :
         sql = """ 
-            SELECT * from Conversations WHERE sessionId = :sessionId
+            SELECT * from Users WHERE sessionId = :sessionId
             """
         sessionId = {'name': 'sessionId', 'value': {'stringValue': item['sessionId']}}
             
@@ -110,7 +109,7 @@ def updateItem(item, diccionary):
         }
     else:
         sql = """ 
-        SELECT * from Conversations WHERE sessionId = :sessionId
+        SELECT * from Users WHERE sessionId = :sessionId
         """
         sessionId = {'name': 'sessionId', 'value': {'stringValue': item['sessionId']}}
             
@@ -131,17 +130,17 @@ def updateItem(item, diccionary):
             }
         else:
             sql = """
-            UPDATE Conversations set lastState=:lastState, intent = :intent, 
+            UPDATE Users set lastState=:lastState, intent = :intent, 
             lastQuestion = :lastQuestion, endConversation = :endConversation,
-            updated = :updated WHERE sessionId = :sessionId
+            onHold = :onHold WHERE sessionId = :sessionId
             """
             sessionId = {'name': 'sessionId', 'value': {'stringValue': item['sessionId']}}
             lastState = {'name': 'lastState', 'value': {'stringValue': item['lastState']}}
             intent = {'name': 'intent', 'value': {'stringValue': item['intent']}}
             lastQuestion={'name': 'lastQuestion', 'value':{'longValue': item['lastQuestion']}}
             endConversation = {'name':'endConversation', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
-            updated = {'name':'updated', 'value':{'stringValue': now.strftime("%Y-%m-%d %H:%M:%S")}}
-            parameters = [sessionId, lastState, intent, lastQuestion, endConversation, updated]
+            onHold = {'name':'onHold', 'value':{'booleanValue': False}}
+            parameters = [sessionId, lastState, intent, lastQuestion, endConversation, onHold]
 
             response = rds_data.execute_statement(
             resourceArn = cluster_arn, 
@@ -172,7 +171,7 @@ def deleteItem(item, diccionary):
         }
     else :
         sql = """ 
-        SELECT * from Conversations WHERE sessionId = :sessionId
+        SELECT * from Users WHERE sessionId = :sessionId
         """
         sessionId = {'name': 'sessionId', 'value': {'stringValue': item['sessionId']}}
             
@@ -194,7 +193,7 @@ def deleteItem(item, diccionary):
         else :
             
             sql = """
-            DELETE FROM Conversations WHERE sessionId = :sessionId
+            DELETE FROM Users WHERE sessionId = :sessionId
             """
             sessionId = {'name': 'sessionId', 'value': {'stringValue': item['sessionId']}}
             parameters = [sessionId]
