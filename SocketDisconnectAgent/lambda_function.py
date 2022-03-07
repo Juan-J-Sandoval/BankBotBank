@@ -6,7 +6,7 @@ secret_arn = os.environ['secret_arn_aurora']
 def lambda_handler(event, context):
     print(json.dumps(event))
     sql = """ 
-            UPDATE Agents SET sessionId = '' WHERE sessionId = :sessionId
+            UPDATE Agents SET sessionId = '', sessionUser='' WHERE sessionId = :sessionId
         """
     sessionId = {'name': 'sessionId', 'value': {'stringValue': event['requestContext']['connectionId']}}
     response = rds_data.execute_statement(
