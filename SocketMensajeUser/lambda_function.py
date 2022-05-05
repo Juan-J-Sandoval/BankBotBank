@@ -21,6 +21,7 @@ def lambda_handler(event, context):
         sf_data = "{\"sessionID\":\""+event['requestContext']['connectionId']+"\",\"mensaje\":\""+json.loads(event['body'])['message']+"\"}"
         sf_respuesta = sf.start_sync_execution(stateMachineArn=os.environ['STATE_MACHINE'], input=str(sf_data))
         mensajeBot=json.loads(sf_respuesta['output'])
+        updateCanal(id=event['requestContext']['connectionId'])
         if json.loads(sf_respuesta['output'])['intent'] == 'agentehabla':
             # Se le notifica al agente que tiene un usuario en espera
             if User(event['requestContext']['connectionId']):
@@ -131,6 +132,38 @@ def QueryAgent():
                     sessionUsers.append(item['sessionId'])
                 return {'idSockets': sockets, 'sessionUsers':sessionUsers}
     return {}
+
+def updateCanal(id, rs='LP'):
+    sql = """ 
+        SELECT * from Users where sessionId = :sessionId
+    """
+    sessionId = {'name': 'sessionId', 'value': {'stringValue': id}}
+    response = rds_data.execute_statement(
+        includeResultMetadata = True,
+        resourceArn = cluster_arn, 
+        secretArn = secret_arn, 
+        database = os.environ['name_db'], 
+        sql = sql,
+        parameters = [sessionId]
+    )
+    rows = []
+    rows = responseQuery(response)
+    if len(rows) != 0:
+        if rows[0]['canal'] != '':
+            sql = """
+                UPDATE Users SET canal = :canal WHERE sessionId = :sessionId
+            """
+            sessionId = {'name': 'sessionId', 'value': {'stringValue': id}}
+            canal = {'name': 'canal', 'value': {'stringValue': rs}}
+            response = rds_data.execute_statement(
+                includeResultMetadata = True,
+                resourceArn = cluster_arn, 
+                secretArn = secret_arn, 
+                database = os.environ['name_db'], 
+                sql = sql,
+                parameters = [sessionId,canal]
+            )
+            print(response['ResponseMetadata']['HTTPStatusCode']) 
 
 def responseQuery(payload_item):
     rows = []
