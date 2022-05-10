@@ -680,6 +680,30 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref ReportsService
       Principal: apigateway.amazonaws.com
+  MetricsService:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.8
+      Timeout: 29
+      MemorySize: 128
+      Handler: lambda_function.lambda_handler
+      FunctionName: !Sub MetricsService-${Vers}-${Env}
+      CodeUri: MetricsService
+      Description: BankBot
+      Role: !GetAtt RoleLogs.Arn
+      Environment:
+        Variables:
+          cluster_arn_aurora: !Ref ClusterArn
+          secret_arn_aurora: !Ref SecretManage
+          name_db: !Ref DBTableName
+  PermisosMetricsService:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - PointAccess
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref MetricsService
+      Principal: apigateway.amazonaws.com
   #Todas las apis generales
   PointAccess:
     Type: AWS::ApiGateway::RestApi
@@ -973,6 +997,65 @@ Resources:
                   integration.request.path.bucket: "method.request.path.folder"
                   integration.request.header.Content-Type: "method.request.header.Content-Type"
                 passthroughBehavior: "when_no_match"
+          /metrics:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      schema:
+                        type: "string"
+                    Access-Control-Allow-Methods:
+                      schema:
+                        type: "string"
+                    Access-Control-Allow-Headers:
+                      schema:
+                        type: "string"
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/Empty"
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MetricsService}/invocations
+                httpMethod: "POST"
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                type: "aws"
+            options:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      schema:
+                        type: "string"
+                    Access-Control-Allow-Methods:
+                      schema:
+                        type: "string"
+                    Access-Control-Allow-Headers:
+                      schema:
+                        type: "string"
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/Empty"
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                type: "mock"      
           /{folder}/{item}:
             put:
               parameters:
