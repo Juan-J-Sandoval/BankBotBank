@@ -17,6 +17,9 @@ def lambda_handler(event, context):
     payload_dictionary = json.loads(json.dumps(event['payload']['Item']))    
     operation = event['operation']
     
+    if operation == 'RedesSociales':
+        result = getRedesSociales()
+        
     if operation == 'getCounterQuestionsByConversationAndDates':
         result = getCounterQuestionsByConversationAndDates(event['payload']['Item'], payload_dictionary)
 
@@ -37,6 +40,20 @@ def lambda_handler(event, context):
     
     return result
     
+def getRedesSociales():
+    rs= ['TG', 'FB', 'LP']
+    resulRS=[]
+    for item in rs:
+        sql = "select count(*) from Users where canal='"+item+"';"
+        print(sql)
+        response = rds_data.execute_statement(
+            resourceArn = cluster_arn, 
+            secretArn = secret_arn, 
+            database = os.environ['name_db'], 
+            sql = sql)
+        resulRS.append({item: response['records'][0][0]['longValue']})
+    response={ 'code': 200, 'message': resulRS }
+    return response
 
 #definicion de conteo de preguntas por conversacion y rango de fechas
 #formato de fechas %Y-%m-%d %H:%M:%S
