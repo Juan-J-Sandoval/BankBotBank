@@ -42,7 +42,7 @@ def lambda_handler(event, context):
     
 def getRedesSociales():
     rs= ['TG', 'FB', 'LP']
-    resulRS=[]
+    resulRS={}
     for item in rs:
         sql = "select count(*) from Users where canal='"+item+"';"
         print(sql)
@@ -51,7 +51,7 @@ def getRedesSociales():
             secretArn = secret_arn, 
             database = os.environ['name_db'], 
             sql = sql)
-        resulRS.append({item: response['records'][0][0]['longValue']})
+        resulRS.update({item: response['records'][0][0]['longValue']})
     response={ 'code': 200, 'message': resulRS }
     return response
 
