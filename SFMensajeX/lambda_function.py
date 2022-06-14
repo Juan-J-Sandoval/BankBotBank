@@ -94,7 +94,7 @@ def distancia(mensaje):
     for i in dataBot["ResponseData"]:
         if len(i['phrases']) > 0:
             print(i['phrases']," tipo: ", type(i['phrases']))
-            j={"requestText":mensaje,"responseText":i['phrases']}
+            j={"operation":"distancia","requestText":mensaje,"responseText":i['phrases']}
             respSemDis = lambdas.invoke(FunctionName=lambdaSemanticDistance,Payload=json.dumps(j, default=decimal_default))
             respSemDis = json.load(respSemDis['Payload'])
             print("distancia ",respSemDis)

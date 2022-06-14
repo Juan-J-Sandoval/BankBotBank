@@ -525,25 +525,13 @@ Resources:
       Layers:
         - !Ref LayerDistance
       Role: !GetAtt RoleLogs.Arn
-  Lexemas:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.8
-      Timeout: 29
-      MemorySize: 128
-      Handler: lambda_function.lambda_handler
-      FunctionName: !Sub Lexemas-${Vers}-${Env}
-      CodeUri: Lexemas
-      Layers:
-        - !Ref LayerDistance
-      Role: !GetAtt RoleLogs.Arn
-  PermisosLexemas:
+  PermisosSemanticDistance:
     Type: AWS::Lambda::Permission
     DependsOn:
       - PointAccess
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref Lexemas
+      FunctionName: !Ref SemanticDistance
       Principal: apigateway.amazonaws.com
   LayerDistance:
     Type: AWS::Serverless::LayerVersion
@@ -890,7 +878,7 @@ Resources:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                 passthroughBehavior: "when_no_match"
                 type: "mock"
-          /lexemas:
+          /distSeman:
             post:
               responses:
                 "200":
@@ -910,7 +898,7 @@ Resources:
                       schema:
                         $ref: "#/components/schemas/Empty"
               x-amazon-apigateway-integration:
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Lexemas}/invocations
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${SemanticDistance}/invocations
                 httpMethod: "POST"
                 responses:
                   default:
@@ -949,54 +937,6 @@ Resources:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                 passthroughBehavior: "when_no_match"
                 type: "mock"
-          /{folder}:
-            put:
-              parameters:
-              - name: "Content-Type"
-                in: "header"
-                schema:
-                  type: "string"
-              - name: "folder"
-                in: "path"
-                required: true
-                schema:
-                  type: "string"
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Content-Length:
-                      schema:
-                        type: "string"
-                    Timestamp:
-                      schema:
-                        type: "string"
-                    Content-Type:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              security:
-              - sigv4: []
-              x-amazon-apigateway-integration:
-                type: "aws"
-                httpMethod: "PUT"
-                credentials: !GetAtt RoleLogs.Arn
-                uri: "arn:aws:apigateway:us-west-2:s3:path/bucket"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Content-Type: "integration.response.header.Content-Type"
-                      method.response.header.Content-Length: "integration.response.header.Content-Length"
-                      method.response.header.Timestamp: "integration.response.header.Date"
-                requestParameters:
-                  integration.request.header.x-amz-acl: "'authenticated-read'"
-                  integration.request.path.bucket: "method.request.path.folder"
-                  integration.request.header.Content-Type: "method.request.header.Content-Type"
-                passthroughBehavior: "when_no_match"
           /metrics:
             post:
               responses:
@@ -1056,6 +996,54 @@ Resources:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                 passthroughBehavior: "when_no_match"
                 type: "mock"      
+          /{folder}:
+            put:
+              parameters:
+              - name: "Content-Type"
+                in: "header"
+                schema:
+                  type: "string"
+              - name: "folder"
+                in: "path"
+                required: true
+                schema:
+                  type: "string"
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Content-Length:
+                      schema:
+                        type: "string"
+                    Timestamp:
+                      schema:
+                        type: "string"
+                    Content-Type:
+                      schema:
+                        type: "string"
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/Empty"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                type: "aws"
+                httpMethod: "PUT"
+                credentials: !GetAtt RoleLogs.Arn
+                uri: "arn:aws:apigateway:us-west-2:s3:path/bucket"
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Content-Type: "integration.response.header.Content-Type"
+                      method.response.header.Content-Length: "integration.response.header.Content-Length"
+                      method.response.header.Timestamp: "integration.response.header.Date"
+                requestParameters:
+                  integration.request.header.x-amz-acl: "'authenticated-read'"
+                  integration.request.path.bucket: "method.request.path.folder"
+                  integration.request.header.Content-Type: "method.request.header.Content-Type"
+                passthroughBehavior: "when_no_match"
           /{folder}/{item}:
             put:
               parameters:

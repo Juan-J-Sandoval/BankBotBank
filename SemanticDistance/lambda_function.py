@@ -1,4 +1,5 @@
 import json
+from turtle import distance
 from nltk.stem.snowball import SpanishStemmer
 import io
 import sys
@@ -9,58 +10,23 @@ from unidecode import unidecode
 print('Loading Distance Function')
 
 def lambda_handler(event, context):
-    try:
-        print("EVENT: " + str(event))
-    except Exception as e:
-        print("Event Exception: " + str(e))
-
-    try:
-        print("EVENT MESSAGE: " + str(event['requestText']))
-        requestText = event['requestText']
-        responseText = event['responseText']
-    except Exception as e:
-        print("Event Exception: " + str(e))
-
-    try:
-        body = json.loads(event.get('body', '{}'))
-    except Exception as e:
-        print("Exception: " + str(e))
-    try:
-        print("REQUEST BODY: " + str(body))
-    except Exception as e:
-        print("Exception printing 1: " + str(e))
-    try:
-        print("MESSAGE: " + body.get('requestText', ''))
-        requestText = body.get('requestText', '')
-        responseText = body.get('responseText', '')
-    except Exception as e:
-        print("Exception printing 2: " + str(e))
-
-    requestText = event['requestText']
-    responseText = event['responseText']
-    print("requestText: ", requestText)
-    print("responseText: ",responseText)
-    ##requestText = event['requestText']
-    requestVector = vectorizeText(requestText)
-    print("requestVector: ", requestVector)
-    ##responseVector = event['responseVector']
-
-    ##responseText = event['responseText']
-    ##responseVector = vectorizeText(responseText)
-
-    #distance = semanticDistance(requestVector, responseVector)
-    distance = semanticDistance(requestVector, responseText)
-
-    response = {"distance": distance}
-    print("THE RESPONSE TO BE SENT IS: " + str(response))
+    print(json.dumps(event))
+    
+    operation = event['operation']
+    
+    if operation == 'stringToVector':
+        result = vectorizeText(event['requestText'])
+    elif operation == 'distancia':
+        requestVector = vectorizeText(event['requestText'])
+        print("requestVector: ", requestVector)
+        distance = semanticDistance(requestVector, event['responseText'])
+        result = {"distance": distance}
+    print("THE RESPONSE TO BE SENT IS: " + str(result))
 
     return {
         "statusCode": 200,
-        "body": response
+        "body": result
     }
-    #responseObject = json.dumps(response)
-    #return responseObject
-
 #The following code are the functions in the distance.py and preprocessing.py files, and have been moved to this main file.
 #========================================================================================================================
 def semanticDistance(request, response):
